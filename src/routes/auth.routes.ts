@@ -8,5 +8,6 @@ const router = Router();
 router.post('/register', registrationLimiter, authController.register.bind(authController));
 router.post('/login', authController.login.bind(authController));
 router.put('/profile', authenticate, authController.updateProfile.bind(authController));
+router.put('/change-password', authenticate, authController.changePassword.bind(authController));
 
 export default router;

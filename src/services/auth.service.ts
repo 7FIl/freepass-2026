@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../utils/prisma';
-import { RegisterInput, LoginInput, UpdateProfileInput } from '../validations/auth.validation';
+import { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput } from '../validations/auth.validation';
 
 export class AuthService {
   async register(data: RegisterInput) {
@@ -128,6 +128,37 @@ export class AuthService {
     });
 
     return updatedUser;
+  }
+
+  async changePassword(userId: string, data: ChangePasswordInput) {
+    const { currentPassword, newPassword } = data;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isPasswordValid) {
+      throw new Error('Current password is incorrect');
+    }
+
+    if (currentPassword === newPassword) {
+      throw new Error('New password must be different from current password');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    return { message: 'Password changed successfully' };
   }
 }
 
