@@ -28,5 +28,35 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  canteens  Canteen[]
+
   @@map("users")
+}
+
+model Canteen {
+  id        String   @id @default(uuid())
+  name      String
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  isOpen    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  menuItems MenuItem[]
+
+  @@map("canteens")
+}
+
+model MenuItem {
+  id          String   @id @default(uuid())
+  canteenId   String
+  canteen     Canteen  @relation(fields: [canteenId], references: [id], onDelete: Cascade)
+  name        String
+  description String
+  price       Float
+  stock       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("menu_items")
 }
