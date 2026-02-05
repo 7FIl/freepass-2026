@@ -43,7 +43,10 @@ POSTGRES_PORT=5432
 DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${POSTGRES_PORT}/${POSTGRES_DB}"
 ```
 
-**Important**: Change `JWT_SECRET` and `POSTGRES_PASSWORD` to secure values!
+**Important**: 
+- `JWT_SECRET` is **required** - application will fail to start if not set (min 32 characters recommended)
+- Change `POSTGRES_PASSWORD` to a secure value
+- Never commit `.env` file to version control
 
 ### Step 3: Start Docker Containers
 

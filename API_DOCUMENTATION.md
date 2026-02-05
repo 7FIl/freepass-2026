@@ -1098,6 +1098,11 @@ Authorization: Bearer <token>
 
 Most endpoints require authentication using JWT (JSON Web Token).
 
+**Environment Requirement:**
+- `JWT_SECRET` environment variable **must be set** for the API to start
+- Minimum 32 characters recommended for production
+- Application will throw an error on startup if JWT_SECRET is missing
+
 **How to authenticate:**
 1. Login using `/auth/login` to get a token
 2. Include the token in the Authorization header for protected routes:

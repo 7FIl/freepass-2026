@@ -3,6 +3,12 @@ import jwt from 'jsonwebtoken';
 import prisma from '../utils/prisma';
 import { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput } from '../validations/auth.validation';
 
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is not set');
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
+
 export class AuthService {
   async register(data: RegisterInput) {
     const { username, email, password } = data;
@@ -65,7 +71,7 @@ export class AuthService {
         email: user.email,
         role: user.role,
       },
-      process.env.JWT_SECRET || 'default-secret-key',
+      JWT_SECRET,
       { expiresIn: '24h' },
     );
 
