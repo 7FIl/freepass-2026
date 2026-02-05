@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../utils/prisma';
-import { RegisterInput, LoginInput } from '../validations/auth.validation';
+import { RegisterInput, LoginInput, UpdateProfileInput } from '../validations/auth.validation';
 
 export class AuthService {
   async register(data: RegisterInput) {
@@ -78,6 +78,56 @@ export class AuthService {
         role: user.role,
       },
     };
+  }
+
+  async updateProfile(userId: string, data: UpdateProfileInput) {
+    const { username, email } = data;
+
+    if (!username && !email) {
+      throw new Error('At least one field must be provided for update');
+    }
+
+    if (username || email) {
+      const existingUser = await prisma.user.findFirst({
+        where: {
+          AND: [
+            { id: { not: userId } },
+            {
+              OR: [
+                email ? { email } : {},
+                username ? { username } : {},
+              ].filter((condition) => Object.keys(condition).length > 0),
+            },
+          ],
+        },
+      });
+
+      if (existingUser) {
+        if (existingUser.email === email) {
+          throw new Error('Email already in use');
+        }
+        if (existingUser.username === username) {
+          throw new Error('Username already taken');
+        }
+      }
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(username && { username }),
+        ...(email && { email }),
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        updatedAt: true,
+      },
+    });
+
+    return updatedUser;
   }
 }
 

@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import authService from '../services/auth.service';
-import { registerSchema, loginSchema } from '../validations/auth.validation';
+import { registerSchema, loginSchema, updateProfileSchema } from '../validations/auth.validation';
 import { ZodError } from 'zod';
+import { AuthRequest } from '../middlewares/auth.middleware';
 
 export class AuthController {
   async register(req: Request, res: Response) {
@@ -66,6 +67,50 @@ export class AuthController {
 
       if (error instanceof Error) {
         return res.status(401).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+      });
+    }
+  }
+
+  async updateProfile(req: AuthRequest, res: Response) {
+    try {
+      const validatedData = updateProfileSchema.parse(req.body);
+
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized',
+        });
+      }
+
+      const updatedUser = await authService.updateProfile(req.user.userId, validatedData);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Profile updated successfully',
+        data: updatedUser,
+      });
+    } catch (error) {
+      if (error instanceof ZodError) {
+        return res.status(400).json({
+          success: false,
+          message: 'Validation failed',
+          errors: error.issues.map((err) => ({
+            field: err.path.join('.'),
+            message: err.message,
+          })),
+        });
+      }
+
+      if (error instanceof Error) {
+        return res.status(400).json({
           success: false,
           message: error.message,
         });
