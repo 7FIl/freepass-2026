@@ -16,9 +16,11 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
+    "seed:admin": "ts-node scripts/seed-admin.ts",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
-    "docker:build": "docker-compose build"
+    "docker:build": "docker-compose build",
+    "docker:logs": "docker-compose logs -f"
   },
   "repository": {
     "type": "git",
