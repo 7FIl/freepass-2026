@@ -20,7 +20,7 @@ export class AuthController {
       if (error instanceof ZodError) {
         return res.status(400).json({
           success: false,
-          message: 'Validation failed',
+          message: 'Validation error',
           errors: error.issues.map((err) => ({
             field: err.path.join('.'),
             message: err.message,
@@ -57,7 +57,7 @@ export class AuthController {
       if (error instanceof ZodError) {
         return res.status(400).json({
           success: false,
-          message: 'Validation failed',
+          message: 'Validation error',
           errors: error.issues.map((err) => ({
             field: err.path.join('.'),
             message: err.message,
@@ -66,7 +66,7 @@ export class AuthController {
       }
 
       if (error instanceof Error) {
-        return res.status(401).json({
+        return res.status(400).json({
           success: false,
           message: error.message,
         });
@@ -101,7 +101,7 @@ export class AuthController {
       if (error instanceof ZodError) {
         return res.status(400).json({
           success: false,
-          message: 'Validation failed',
+          message: 'Validation error',
           errors: error.issues.map((err) => ({
             field: err.path.join('.'),
             message: err.message,

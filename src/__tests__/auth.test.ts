@@ -1,12 +1,27 @@
 import request from 'supertest';
 import express from 'express';
 import authRoutes from '../routes/auth.routes';
+import prisma from '../utils/prisma';
 
 const app = express();
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 
 describe('Auth API - Edge Cases', () => {
+  beforeAll(async () => {
+    await prisma.review.deleteMany();
+    await prisma.payment.deleteMany();
+    await prisma.orderItem.deleteMany();
+    await prisma.order.deleteMany();
+    await prisma.menuItem.deleteMany();
+    await prisma.canteen.deleteMany();
+    await prisma.user.deleteMany();
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
   describe('POST /api/auth/register', () => {
     it('should register user with valid data', async () => {
       const res = await request(app)

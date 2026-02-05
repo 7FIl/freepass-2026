@@ -15,10 +15,10 @@ export class AuthService {
 
     if (existingUser) {
       if (existingUser.email === email) {
-        throw new Error('Email already registered');
+        throw new Error('Email already in use');
       }
       if (existingUser.username === username) {
-        throw new Error('Username already taken');
+        throw new Error('Username already in use');
       }
     }
 
@@ -107,7 +107,7 @@ export class AuthService {
           throw new Error('Email already in use');
         }
         if (existingUser.username === username) {
-          throw new Error('Username already taken');
+          throw new Error('Username already in use');
         }
       }
     }
