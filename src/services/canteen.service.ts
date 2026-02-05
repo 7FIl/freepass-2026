@@ -154,7 +154,6 @@ export class CanteenService {
   }
 
   async getMenuItems(canteenId: string) {
-    // Verify canteen exists
     const canteen = await prisma.canteen.findUnique({
       where: { id: canteenId },
     });

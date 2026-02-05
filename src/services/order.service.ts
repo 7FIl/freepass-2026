@@ -20,7 +20,6 @@ export class OrderService {
       throw new Error('Canteen is currently closed');
     }
 
-    // Validate all items and calculate total price
     let totalPrice = 0;
     const menuItems: { id: string; price: number; name: string; stock: number }[] = [];
 
@@ -50,7 +49,6 @@ export class OrderService {
       });
     }
 
-    // Create order with items
     const order = await prisma.order.create({
       data: {
         userId,
@@ -89,7 +87,6 @@ export class OrderService {
       },
     });
 
-    // Decrease stock for each item
     for (const item of data.items) {
       await prisma.menuItem.update({
         where: { id: item.menuItemId },

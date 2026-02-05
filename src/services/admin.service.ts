@@ -144,14 +144,12 @@ export class AdminService {
       throw new Error('User not found');
     }
 
-    // If user is a canteen owner, delete their canteens first
     if (user.role === 'CANTEEN_OWNER') {
       await prisma.canteen.deleteMany({
         where: { ownerId: userId },
       });
     }
 
-    // Delete user and all related data (cascaded by Prisma)
     await prisma.user.delete({
       where: { id: userId },
     });

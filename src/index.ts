@@ -19,6 +19,14 @@ app.get('/', (_req: Request, res: Response) => {
   });
 });
 
+app.get('/health', (_req: Request, res: Response) => {
+  res.json({
+    success: true,
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.use('/api', routes);
 
 app.listen(PORT, () => {

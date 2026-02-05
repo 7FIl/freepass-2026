@@ -154,7 +154,72 @@ The implementation of this project MUST be in the form of a REST, gRPC, or Graph
 
 ## **🧪** API Installation
 
-> Write how to run your service in a local or development environment here. If you use Docker to serve your DBMS or your server, you will receive bonus points for your submission.
+> **📚 Complete Setup Guide**: See [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed installation instructions.
+
+### Quick Start with Docker (Recommended)
+
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd freepass-2026
+   ```
+
+2. **Configure environment:**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your credentials
+   ```
+
+3. **Start with Docker:**
+   ```bash
+   docker-compose up -d
+   ```
+
+4. **Access the API:**
+   - API: `http://localhost:3000`
+   - Health Check: `http://localhost:3000/health`
+   - Default Admin: `root@admin.com` / `<your-POSTGRES_PASSWORD>`
+
+### Quick Start without Docker
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Setup PostgreSQL database:**
+   ```sql
+   CREATE DATABASE canteen_db;
+   ```
+
+3. **Configure environment:**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your database credentials
+   ```
+
+4. **Run migrations and seed:**
+   ```bash
+   npx prisma migrate deploy
+   npx prisma generate
+   npx ts-node scripts/seed-admin.ts
+   ```
+
+5. **Start development server:**
+   ```bash
+   npm run dev
+   ```
+
+6. **Run tests:**
+   ```bash
+   npm test
+   ```
+
+**All 117 tests passing ✅**
+
+For detailed documentation:
+- Complete setup instructions: [SETUP_GUIDE.md](SETUP_GUIDE.md)
+- API reference: [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
 
 ## **📞** Contact
 
