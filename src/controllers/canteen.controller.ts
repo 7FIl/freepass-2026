@@ -12,6 +12,8 @@ import { AuthRequest } from '../middlewares/auth.middleware';
 export class CanteenController {
   async createCanteen(req: AuthRequest, res: Response) {
     try {
+      const validatedData = createCanteenSchema.parse(req.body);
+
       if (req.user?.role !== 'CANTEEN_OWNER' && req.user?.role !== 'ADMIN') {
         return res.status(403).json({
           success: false,
@@ -19,7 +21,6 @@ export class CanteenController {
         });
       }
 
-      const validatedData = createCanteenSchema.parse(req.body);
       const canteen = await canteenService.createCanteen(req.user.userId, validatedData);
 
       return res.status(201).json({
@@ -31,7 +32,7 @@ export class CanteenController {
       if (error instanceof ZodError) {
         return res.status(400).json({
           success: false,
-          message: 'Validation failed',
+          message: 'Validation error',
           errors: error.issues.map((err) => ({
             field: err.path.join('.'),
             message: err.message,
@@ -130,7 +131,7 @@ export class CanteenController {
       if (error instanceof ZodError) {
         return res.status(400).json({
           success: false,
-          message: 'Validation failed',
+          message: 'Validation error',
           errors: error.issues.map((err) => ({
             field: err.path.join('.'),
             message: err.message,
@@ -139,6 +140,61 @@ export class CanteenController {
       }
 
       if (error instanceof Error) {
+        if (error.message.includes('Unauthorized')) {
+          return res.status(403).json({
+            success: false,
+            message: error.message,
+          });
+        }
+        return res.status(400).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+      });
+    }
+  }
+
+  async toggleCanteenStatus(req: AuthRequest, res: Response) {
+    try {
+      const { canteenId } = req.params;
+
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized',
+        });
+      }
+
+      const updatedCanteen = await canteenService.toggleCanteenStatus(
+        canteenId as string,
+        req.user.userId,
+        req.user.role,
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: 'Canteen status toggled successfully',
+        data: updatedCanteen,
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          return res.status(404).json({
+            success: false,
+            message: error.message,
+          });
+        }
+        if (error.message.includes('Unauthorized')) {
+          return res.status(403).json({
+            success: false,
+            message: error.message,
+          });
+        }
         return res.status(400).json({
           success: false,
           message: error.message,
@@ -180,7 +236,7 @@ export class CanteenController {
       if (error instanceof ZodError) {
         return res.status(400).json({
           success: false,
-          message: 'Validation failed',
+          message: 'Validation error',
           errors: error.issues.map((err) => ({
             field: err.path.join('.'),
             message: err.message,
@@ -189,6 +245,12 @@ export class CanteenController {
       }
 
       if (error instanceof Error) {
+        if (error.message.includes('Unauthorized')) {
+          return res.status(403).json({
+            success: false,
+            message: error.message,
+          });
+        }
         return res.status(400).json({
           success: false,
           message: error.message,
@@ -214,6 +276,12 @@ export class CanteenController {
       });
     } catch (error) {
       if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          return res.status(404).json({
+            success: false,
+            message: error.message,
+          });
+        }
         return res.status(400).json({
           success: false,
           message: error.message,
@@ -256,7 +324,7 @@ export class CanteenController {
       if (error instanceof ZodError) {
         return res.status(400).json({
           success: false,
-          message: 'Validation failed',
+          message: 'Validation error',
           errors: error.issues.map((err) => ({
             field: err.path.join('.'),
             message: err.message,

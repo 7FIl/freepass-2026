@@ -8,6 +8,7 @@ router.post('/', authenticate, canteenController.createCanteen.bind(canteenContr
 router.get('/', canteenController.getCanteens.bind(canteenController));
 router.get('/:canteenId', canteenController.getCanteenById.bind(canteenController));
 router.put('/:canteenId', authenticate, canteenController.updateCanteen.bind(canteenController));
+router.post('/:canteenId/toggle-status', authenticate, canteenController.toggleCanteenStatus.bind(canteenController));
 
 router.post('/:canteenId/menu', authenticate, canteenController.createMenuItem.bind(canteenController));
 router.get('/:canteenId/menu', canteenController.getMenuItems.bind(canteenController));

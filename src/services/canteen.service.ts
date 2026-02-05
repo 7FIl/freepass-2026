@@ -97,6 +97,38 @@ export class CanteenService {
     return updatedCanteen;
   }
 
+  async toggleCanteenStatus(canteenId: string, userId: string, userRole: string) {
+    const canteen = await prisma.canteen.findUnique({
+      where: { id: canteenId },
+    });
+
+    if (!canteen) {
+      throw new Error('Canteen not found');
+    }
+
+    if (canteen.ownerId !== userId && userRole !== 'ADMIN') {
+      throw new Error('Unauthorized: Only the canteen owner or admin can toggle canteen status');
+    }
+
+    const updatedCanteen = await prisma.canteen.update({
+      where: { id: canteenId },
+      data: {
+        isOpen: !canteen.isOpen,
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return updatedCanteen;
+  }
+
   async createMenuItem(canteenId: string, userId: string, userRole: string, data: CreateMenuItemInput) {
     const canteen = await prisma.canteen.findUnique({
       where: { id: canteenId },
@@ -122,6 +154,15 @@ export class CanteenService {
   }
 
   async getMenuItems(canteenId: string) {
+    // Verify canteen exists
+    const canteen = await prisma.canteen.findUnique({
+      where: { id: canteenId },
+    });
+
+    if (!canteen) {
+      throw new Error('Canteen not found');
+    }
+
     const menuItems = await prisma.menuItem.findMany({
       where: { canteenId },
     });

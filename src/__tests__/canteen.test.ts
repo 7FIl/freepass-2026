@@ -2,6 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import canteenRoutes from '../routes/canteen.routes';
 import authRoutes from '../routes/auth.routes';
+import prisma from '../utils/prisma';
 
 const app = express();
 app.use(express.json());
@@ -14,6 +15,15 @@ describe('Canteen API - Edge Cases', () => {
   let userToken: string;
 
   beforeAll(async () => {
+    // Clean database
+    await prisma.review.deleteMany();
+    await prisma.payment.deleteMany();
+    await prisma.orderItem.deleteMany();
+    await prisma.order.deleteMany();
+    await prisma.menuItem.deleteMany();
+    await prisma.canteen.deleteMany();
+    await prisma.user.deleteMany();
+
     // Create canteen owner account
     await request(app)
       .post('/api/auth/register')
@@ -22,6 +32,12 @@ describe('Canteen API - Edge Cases', () => {
         email: 'owner@gmail.com',
         password: 'TestPassword123',
       });
+
+    // Update role to CANTEEN_OWNER
+    await prisma.user.update({
+      where: { email: 'owner@gmail.com' },
+      data: { role: 'CANTEEN_OWNER' },
+    });
 
     const ownerLoginRes = await request(app)
       .post('/api/auth/login')
@@ -47,6 +63,10 @@ describe('Canteen API - Edge Cases', () => {
         password: 'TestPassword123',
       });
     userToken = userLoginRes.body.data.token;
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
   });
 
   describe('POST /api/canteens - Create Canteen', () => {
