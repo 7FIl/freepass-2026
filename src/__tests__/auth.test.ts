@@ -1,7 +1,6 @@
 import request from 'supertest';
 import express from 'express';
 import authRoutes from '../routes/auth.routes';
-import { authenticate } from '../middlewares/auth.middleware';
 
 const app = express();
 app.use(express.json());
@@ -294,7 +293,7 @@ describe('Auth API - Edge Cases', () => {
     let token: string;
 
     beforeAll(async () => {
-      const registerRes = await request(app)
+      await request(app)
         .post('/api/auth/register')
         .send({
           username: 'profileuser',

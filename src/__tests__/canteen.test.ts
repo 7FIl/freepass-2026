@@ -10,20 +10,18 @@ app.use('/api/canteens', canteenRoutes);
 
 describe('Canteen API - Edge Cases', () => {
   let ownerToken: string;
-  let ownerUserId: string;
   let canteenId: string;
   let userToken: string;
 
   beforeAll(async () => {
     // Create canteen owner account
-    const ownerRes = await request(app)
+    await request(app)
       .post('/api/auth/register')
       .send({
         username: 'canteenowner',
         email: 'owner@gmail.com',
         password: 'TestPassword123',
       });
-    ownerUserId = ownerRes.body.data.id;
 
     const ownerLoginRes = await request(app)
       .post('/api/auth/login')
@@ -34,7 +32,7 @@ describe('Canteen API - Edge Cases', () => {
     ownerToken = ownerLoginRes.body.data.token;
 
     // Create regular user
-    const userRes = await request(app)
+    await request(app)
       .post('/api/auth/register')
       .send({
         username: 'regularuser',

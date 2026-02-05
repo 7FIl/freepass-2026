@@ -11,11 +11,10 @@ app.use('/api/admin', adminRoutes);
 describe('Admin API - Edge Cases', () => {
   let adminToken: string;
   let userId: string;
-  let canteenOwnerId: string;
 
   beforeAll(async () => {
     // Create admin account (in real app, this would be done differently)
-    const adminRes = await request(app)
+    await request(app)
       .post('/api/auth/register')
       .send({
         username: 'admin',
@@ -70,13 +69,12 @@ describe('Admin API - Edge Cases', () => {
       expect([201, 403]).toContain(res.status);
       if (res.status === 201) {
         expect(res.body.data.role).toBe('CANTEEN_OWNER');
-        canteenOwnerId = res.body.data.id;
       }
     });
 
     it('should reject creation by non-admin', async () => {
       // Create a regular user
-      const userRes = await request(app)
+      await request(app)
         .post('/api/auth/register')
         .send({
           username: 'regularuser',
@@ -222,7 +220,7 @@ describe('Admin API - Edge Cases', () => {
     });
 
     it('should reject access by non-admin', async () => {
-      const userRes = await request(app)
+      await request(app)
         .post('/api/auth/register')
         .send({
           username: 'normaluser2',
@@ -281,7 +279,7 @@ describe('Admin API - Edge Cases', () => {
     });
 
     it('should reject access by non-admin', async () => {
-      const userRes = await request(app)
+      await request(app)
         .post('/api/auth/register')
         .send({
           username: 'normaluser3',
@@ -363,7 +361,7 @@ describe('Admin API - Edge Cases', () => {
     });
 
     it('should reject update by non-admin', async () => {
-      const userRes = await request(app)
+      await request(app)
         .post('/api/auth/register')
         .send({
           username: 'normaluser4',
@@ -426,7 +424,7 @@ describe('Admin API - Edge Cases', () => {
     });
 
     it('should reject deletion by non-admin', async () => {
-      const userRes = await request(app)
+      await request(app)
         .post('/api/auth/register')
         .send({
           username: 'normaluser5',
@@ -479,7 +477,7 @@ describe('Admin API - Edge Cases', () => {
     });
 
     it('should reject access by non-admin', async () => {
-      const userRes = await request(app)
+      await request(app)
         .post('/api/auth/register')
         .send({
           username: 'normaluser6',

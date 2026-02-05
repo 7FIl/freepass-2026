@@ -282,6 +282,9 @@ export class OrderService {
   async createReview(orderId: string, userId: string, data: CreateReviewInput) {
     const order = await prisma.order.findUnique({
       where: { id: orderId },
+      include: {
+        review: true,
+      },
     });
 
     if (!order) {
