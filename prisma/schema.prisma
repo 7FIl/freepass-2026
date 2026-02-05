@@ -19,6 +19,18 @@ enum UserRole {
   ADMIN
 }
 
+enum OrderStatus {
+  WAITING
+  COOKING
+  READY
+  COMPLETED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+}
+
 model User {
   id        String   @id @default(uuid())
   username  String   @unique
@@ -29,6 +41,8 @@ model User {
   updatedAt DateTime @updatedAt
 
   canteens  Canteen[]
+  orders    Order[]
+  reviews   Review[]
 
   @@map("users")
 }
@@ -43,6 +57,7 @@ model Canteen {
   updatedAt DateTime @updatedAt
 
   menuItems MenuItem[]
+  orders    Order[]
 
   @@map("canteens")
 }
@@ -58,5 +73,66 @@ model MenuItem {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  orderItems OrderItem[]
+
   @@map("menu_items")
+}
+
+model Order {
+  id            String        @id @default(uuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  canteenId     String
+  canteen       Canteen       @relation(fields: [canteenId], references: [id], onDelete: Cascade)
+  totalPrice    Float
+  status        OrderStatus   @default(WAITING)
+  paymentStatus PaymentStatus @default(UNPAID)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  items    OrderItem[]
+  payment  Payment?
+  review   Review?
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+  quantity   Int
+  price      Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("order_items")
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  orderId   String        @unique
+  order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount    Float
+  status    PaymentStatus @default(UNPAID)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@map("payments")
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rating    Int
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reviews")
 }
