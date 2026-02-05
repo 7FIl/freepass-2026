@@ -10,6 +10,9 @@ import { AuthRequest } from '../middlewares/auth.middleware';
 export class AdminController {
   async createUser(req: AuthRequest, res: Response): Promise<void> {
     try {
+      const body = req.body;
+      const validatedData = createUserSchema.parse(body);
+
       if (req.user!.role !== 'ADMIN') {
         res.status(403).json({
           message: 'Unauthorized: Only admins can create users',
@@ -17,8 +20,6 @@ export class AdminController {
         return;
       }
 
-      const body = req.body;
-      const validatedData = createUserSchema.parse(body);
       const user = await adminService.createUser(validatedData);
 
       res.status(201).json({
@@ -102,6 +103,10 @@ export class AdminController {
 
   async updateUser(req: AuthRequest, res: Response): Promise<void> {
     try {
+      const { userId } = req.params;
+      const body = req.body;
+      const validatedData = updateUserSchema.parse(body);
+
       if (req.user!.role !== 'ADMIN') {
         res.status(403).json({
           message: 'Unauthorized: Only admins can update users',
@@ -109,9 +114,6 @@ export class AdminController {
         return;
       }
 
-      const { userId } = req.params;
-      const body = req.body;
-      const validatedData = updateUserSchema.parse(body);
       const user = await adminService.updateUser(userId as string, validatedData);
 
       res.status(200).json({

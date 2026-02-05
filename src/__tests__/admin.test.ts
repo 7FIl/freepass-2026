@@ -2,6 +2,7 @@ import request from 'supertest';
 import express from 'express';
 import adminRoutes from '../routes/admin.routes';
 import authRoutes from '../routes/auth.routes';
+import prisma from '../utils/prisma';
 
 const app = express();
 app.use(express.json());
@@ -13,7 +14,16 @@ describe('Admin API - Edge Cases', () => {
   let userId: string;
 
   beforeAll(async () => {
-    // Create admin account (in real app, this would be done differently)
+    // Clean database
+    await prisma.review.deleteMany();
+    await prisma.payment.deleteMany();
+    await prisma.orderItem.deleteMany();
+    await prisma.order.deleteMany();
+    await prisma.menuItem.deleteMany();
+    await prisma.canteen.deleteMany();
+    await prisma.user.deleteMany();
+
+    // Create admin account
     await request(app)
       .post('/api/auth/register')
       .send({
@@ -22,9 +32,11 @@ describe('Admin API - Edge Cases', () => {
         password: 'AdminPassword123',
       });
 
-    // Manually update role to ADMIN (in real scenario, use database)
-    // For test purposes, we'll assume the first user has admin role
-    // In practice, you'd need a separate admin creation endpoint or DB script
+    // Manually update role to ADMIN in database
+    await prisma.user.update({
+      where: { email: 'admin@gmail.com' },
+      data: { role: 'ADMIN' },
+    });
 
     const adminLoginRes = await request(app)
       .post('/api/auth/login')
@@ -33,6 +45,10 @@ describe('Admin API - Edge Cases', () => {
         password: 'AdminPassword123',
       });
     adminToken = adminLoginRes.body.data.token;
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
   });
 
   describe('POST /api/admin/users - Create User', () => {
@@ -393,10 +409,11 @@ describe('Admin API - Edge Cases', () => {
           .put(`/api/admin/users/${userId}`)
           .set('Authorization', `Bearer ${adminToken}`)
           .send({
-            email: 'newuser@gmail.com', // Already in use
+            email: 'admin@gmail.com', // Already in use by admin
           });
 
-        expect([400, 403]).toContain(res.status);
+        expect(res.status).toBe(400);
+        expect(res.body.message).toContain('Email already in use');
       }
     });
 
