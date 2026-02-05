@@ -17,7 +17,7 @@ export class OrderController {
       const body = req.body;
 
       const validatedData = createOrderSchema.parse(body);
-      const order = await orderService.createOrder(userId, canteenId, validatedData);
+      const order = await orderService.createOrder(userId, canteenId as string, validatedData);
 
       res.status(201).json({
         message: 'Order created successfully',
@@ -65,7 +65,7 @@ export class OrderController {
       const { userId, role } = req.user!;
       const { canteenId } = req.params;
 
-      const orders = await orderService.getCanteenOrders(canteenId, userId, role);
+      const orders = await orderService.getCanteenOrders(canteenId as string, userId, role);
 
       res.status(200).json({
         message: 'Orders retrieved successfully',
@@ -91,7 +91,7 @@ export class OrderController {
       const body = req.body;
 
       const validatedData = updateOrderStatusSchema.parse(body);
-      const order = await orderService.updateOrderStatus(orderId, userId, role, validatedData);
+      const order = await orderService.updateOrderStatus(orderId as string, userId, role, validatedData);
 
       res.status(200).json({
         message: 'Order status updated successfully',
@@ -125,7 +125,7 @@ export class OrderController {
       const body = req.body;
 
       const validatedData = makePaymentSchema.parse(body);
-      const result = await orderService.makePayment(orderId, userId, validatedData);
+      const result = await orderService.makePayment(orderId as string, userId, validatedData);
 
       res.status(200).json({
         message: 'Payment processed successfully',
@@ -159,7 +159,7 @@ export class OrderController {
       const body = req.body;
 
       const validatedData = createReviewSchema.parse(body);
-      const review = await orderService.createReview(orderId, userId, validatedData);
+      const review = await orderService.createReview(orderId as string, userId, validatedData);
 
       res.status(201).json({
         message: 'Review created successfully',
@@ -191,7 +191,7 @@ export class OrderController {
       const { userId, role } = req.user!;
       const { reviewId } = req.params;
 
-      const result = await orderService.deleteReview(reviewId, userId, role);
+      const result = await orderService.deleteReview(reviewId as string, userId, role);
 
       res.status(200).json({
         message: result.message,
@@ -213,7 +213,7 @@ export class OrderController {
     try {
       const { canteenId } = req.params;
 
-      const reviews = await orderService.getCanteenReviews(canteenId);
+      const reviews = await orderService.getCanteenReviews(canteenId as string);
 
       res.status(200).json({
         message: 'Reviews retrieved successfully',

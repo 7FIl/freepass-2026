@@ -17,9 +17,7 @@ export const createOrderSchema = z.object({
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 
 export const updateOrderStatusSchema = z.object({
-  status: z.enum(['WAITING', 'COOKING', 'READY', 'COMPLETED'], {
-    errorMap: () => ({ message: 'Invalid order status' }),
-  }),
+  status: z.enum(['WAITING', 'COOKING', 'READY', 'COMPLETED']),
 });
 
 export type UpdateOrderStatusInput = z.infer<typeof updateOrderStatusSchema>;

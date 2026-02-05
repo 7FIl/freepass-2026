@@ -80,7 +80,7 @@ export class CanteenController {
   async getCanteenById(req: AuthRequest, res: Response) {
     try {
       const { canteenId } = req.params;
-      const canteen = await canteenService.getCanteenById(canteenId);
+      const canteen = await canteenService.getCanteenById(canteenId as string);
 
       return res.status(200).json({
         success: true,
@@ -115,7 +115,7 @@ export class CanteenController {
       }
 
       const updatedCanteen = await canteenService.updateCanteen(
-        canteenId,
+        canteenId as string,
         req.user.userId,
         req.user.role,
         validatedData,
@@ -165,7 +165,7 @@ export class CanteenController {
       }
 
       const menuItem = await canteenService.createMenuItem(
-        canteenId,
+        canteenId as string,
         req.user.userId,
         req.user.role,
         validatedData,
@@ -205,7 +205,7 @@ export class CanteenController {
   async getMenuItems(req: AuthRequest, res: Response) {
     try {
       const { canteenId } = req.params;
-      const menuItems = await canteenService.getMenuItems(canteenId);
+      const menuItems = await canteenService.getMenuItems(canteenId as string);
 
       return res.status(200).json({
         success: true,
@@ -240,8 +240,8 @@ export class CanteenController {
       }
 
       const updatedMenuItem = await canteenService.updateMenuItem(
-        menuItemId,
-        canteenId,
+        menuItemId as string,
+        canteenId as string,
         req.user.userId,
         req.user.role,
         validatedData,
@@ -290,8 +290,8 @@ export class CanteenController {
       }
 
       const result = await canteenService.deleteMenuItem(
-        menuItemId,
-        canteenId,
+        menuItemId as string,
+        canteenId as string,
         req.user.userId,
         req.user.role,
       );

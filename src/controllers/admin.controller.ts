@@ -81,7 +81,7 @@ export class AdminController {
       }
 
       const { userId } = req.params;
-      const user = await adminService.getUserById(userId);
+      const user = await adminService.getUserById(userId as string);
 
       res.status(200).json({
         message: 'User retrieved successfully',
@@ -112,7 +112,7 @@ export class AdminController {
       const { userId } = req.params;
       const body = req.body;
       const validatedData = updateUserSchema.parse(body);
-      const user = await adminService.updateUser(userId, validatedData);
+      const user = await adminService.updateUser(userId as string, validatedData);
 
       res.status(200).json({
         message: 'User updated successfully',
@@ -149,7 +149,7 @@ export class AdminController {
       }
 
       const { userId } = req.params;
-      const result = await adminService.deleteUser(userId);
+      const result = await adminService.deleteUser(userId as string);
 
       res.status(200).json(result);
     } catch (error) {
