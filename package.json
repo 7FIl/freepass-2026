@@ -17,6 +17,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "seed:admin": "ts-node scripts/seed-admin.ts",
+    "seed:full": "ts-node scripts/seed-full.ts",
+    "seed": "ts-node scripts/seed-full.ts",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:build": "docker-compose build",
