@@ -464,6 +464,8 @@ Update canteen details (Owner only).
 Authorization: Bearer <canteen_owner_token>
 ```
 
+**Authorization:** Only the canteen owner or ADMIN can update the canteen. The system verifies ownership before allowing updates.
+
 **Request Body:**
 ```json
 {
@@ -832,6 +834,8 @@ Update order status (Owner for their canteen, User for cancellation).
 Authorization: Bearer <token>
 ```
 
+**Authorization:** Only the canteen owner (verified by ownership) or ADMIN can update order status. The order must be paid before the owner can change the status.
+
 **Request Body:**
 ```json
 {
@@ -839,9 +843,11 @@ Authorization: Bearer <token>
 }
 ```
 
+**Important:** The order payment must be completed (`paymentStatus: PAID`) before the canteen owner can update the order status. This ensures customers pay before food preparation begins.
+
 **Allowed Status Transitions:**
 - User can: `PENDING` → `CANCELLED`
-- Owner can: `PENDING` → `PREPARING` → `READY` → `COMPLETED`
+- Owner can (after payment): `PENDING` → `PREPARING` → `READY` → `COMPLETED`
 
 **Response (200):**
 ```json
@@ -1104,6 +1110,7 @@ The following email domains are allowed for registration:
 - icloud.com, me.com, mac.com
 - outlook.com, hotmail.com, live.com, msn.com
 - yahoo.com
+- student.ub.ac.id, ub.ac.id (University of Brawijaya)
 - 163.com, 126.com, qq.com
 - yandex.ru
 - mail.ru

@@ -17,6 +17,8 @@ const ALLOWED_EMAIL_DOMAINS = [
   'proton.me',
   'protonmail.com',
   'mail.ru',
+  'student.ub.ac.id',
+  'ub.ac.id',
 ];
 
 const isAllowedEmailDomain = (email: string): boolean => {
