@@ -55,6 +55,8 @@ Authenticate and receive a JWT token.
 
 **Endpoint:** `POST /auth/login`
 
+**Rate Limit:** 3 requests per minute per IP (brute force protection)
+
 **Request Body:**
 ```json
 {
@@ -1039,10 +1041,20 @@ Authorization: Bearer <token>
 ```
 
 ### Rate Limit (429)
+
+**Registration Rate Limit:**
 ```json
 {
   "success": false,
   "message": "Too many registration attempts from this IP, please try again after a minute"
+}
+```
+
+**Login Rate Limit (Brute Force Protection):**
+```json
+{
+  "success": false,
+  "message": "Too many login attempts from this IP, please try again after a minute"
 }
 ```
 

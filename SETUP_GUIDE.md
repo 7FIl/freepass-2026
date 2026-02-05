@@ -359,7 +359,9 @@ npm install
    - Set `NODE_ENV=production`
    - Enable HTTPS/SSL
    - Configure CORS properly
-   - Set up rate limiting (already included)
+   - Rate limiting already configured:
+     - Registration: 5 requests/minute per IP
+     - Login: 3 requests/minute per IP (brute force protection)
 
 ---
 
