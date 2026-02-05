@@ -39,6 +39,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
     "hono": "^4.11.7",
     "jsonwebtoken": "^9.0.3",
     "lodash": "^4.17.23",

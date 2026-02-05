@@ -213,8 +213,8 @@ describe('Auth API - Edge Cases', () => {
       await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'loginuser',
-          email: 'login@gmail.com',
+          username: 'auth_loginuser',
+          email: 'auth_login@gmail.com',
           password: 'TestPassword123',
         });
     });
@@ -223,13 +223,13 @@ describe('Auth API - Edge Cases', () => {
       const res = await request(app)
         .post('/api/auth/login')
         .send({
-          email: 'login@gmail.com',
+          email: 'auth_login@gmail.com',
           password: 'TestPassword123',
         });
 
       expect(res.status).toBe(200);
       expect(res.body.data).toHaveProperty('token');
-      expect(res.body.data.user.email).toBe('login@gmail.com');
+      expect(res.body.data.user.email).toBe('auth_login@gmail.com');
     });
 
     it('should reject non-existent user', async () => {
@@ -248,7 +248,7 @@ describe('Auth API - Edge Cases', () => {
       const res = await request(app)
         .post('/api/auth/login')
         .send({
-          email: 'login@gmail.com',
+          email: 'auth_login@gmail.com',
           password: 'WrongPassword123',
         });
 
@@ -294,7 +294,7 @@ describe('Auth API - Edge Cases', () => {
       const res = await request(app)
         .post('/api/auth/login')
         .send({
-          email: 'login@gmail.com',
+          email: 'auth_login@gmail.com',
           password: 'TestPassword123',
         });
 
@@ -311,15 +311,15 @@ describe('Auth API - Edge Cases', () => {
       await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'profileuser',
-          email: 'profile@gmail.com',
+          username: 'auth_profileuser',
+          email: 'auth_profile@gmail.com',
           password: 'TestPassword123',
         });
 
       const loginRes = await request(app)
         .post('/api/auth/login')
         .send({
-          email: 'profile@gmail.com',
+          email: 'auth_profile@gmail.com',
           password: 'TestPassword123',
         });
 
@@ -331,21 +331,21 @@ describe('Auth API - Edge Cases', () => {
         .put('/api/auth/profile')
         .set('Authorization', `Bearer ${token}`)
         .send({
-          username: 'newusername',
-          email: 'newemail@gmail.com',
+          username: 'auth_newusername',
+          email: 'auth_newemail@gmail.com',
         });
 
       expect(res.status).toBe(200);
-      expect(res.body.data.username).toBe('newusername');
-      expect(res.body.data.email).toBe('newemail@gmail.com');
+      expect(res.body.data.username).toBe('auth_newusername');
+      expect(res.body.data.email).toBe('auth_newemail@gmail.com');
     });
 
     it('should reject update without auth token', async () => {
       const res = await request(app)
         .put('/api/auth/profile')
         .send({
-          username: 'newusername',
-          email: 'newemail@gmail.com',
+          username: 'auth_newusername2',
+          email: 'auth_newemail2@gmail.com',
         });
 
       expect(res.status).toBe(401);
@@ -357,8 +357,8 @@ describe('Auth API - Edge Cases', () => {
         .put('/api/auth/profile')
         .set('Authorization', 'Bearer invalidtoken')
         .send({
-          username: 'newusername',
-          email: 'newemail@gmail.com',
+          username: 'auth_newusername3',
+          email: 'auth_newemail3@gmail.com',
         });
 
       expect(res.status).toBe(401);

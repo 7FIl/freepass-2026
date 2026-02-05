@@ -28,21 +28,21 @@ describe('Canteen API - Edge Cases', () => {
     await request(app)
       .post('/api/auth/register')
       .send({
-        username: 'canteenowner',
-        email: 'owner@gmail.com',
+        username: 'canteen_owner',
+        email: 'canteen_owner@gmail.com',
         password: 'TestPassword123',
       });
 
     // Update role to CANTEEN_OWNER
     await prisma.user.update({
-      where: { email: 'owner@gmail.com' },
+      where: { email: 'canteen_owner@gmail.com' },
       data: { role: 'CANTEEN_OWNER' },
     });
 
     const ownerLoginRes = await request(app)
       .post('/api/auth/login')
       .send({
-        email: 'owner@gmail.com',
+        email: 'canteen_owner@gmail.com',
         password: 'TestPassword123',
       });
     ownerToken = ownerLoginRes.body.data.token;
@@ -51,15 +51,15 @@ describe('Canteen API - Edge Cases', () => {
     await request(app)
       .post('/api/auth/register')
       .send({
-        username: 'regularuser',
-        email: 'user@gmail.com',
+        username: 'canteen_user',
+        email: 'canteen_user@gmail.com',
         password: 'TestPassword123',
       });
 
     const userLoginRes = await request(app)
       .post('/api/auth/login')
       .send({
-        email: 'user@gmail.com',
+        email: 'canteen_user@gmail.com',
         password: 'TestPassword123',
       });
     userToken = userLoginRes.body.data.token;

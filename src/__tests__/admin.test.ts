@@ -93,15 +93,15 @@ describe('Admin API - Edge Cases', () => {
       await request(app)
         .post('/api/auth/register')
         .send({
-          username: 'regularuser',
-          email: 'regularuser@gmail.com',
+          username: 'admin_regularuser',
+          email: 'admin_regularuser@gmail.com',
           password: 'TestPassword123',
         });
 
       const userLoginRes = await request(app)
         .post('/api/auth/login')
         .send({
-          email: 'regularuser@gmail.com',
+          email: 'admin_regularuser@gmail.com',
           password: 'TestPassword123',
         });
       const userToken = userLoginRes.body.data.token;
