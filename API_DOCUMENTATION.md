@@ -731,7 +731,7 @@ Authorization: Bearer <token>
 ---
 
 ### 2. Get User Orders
-Get all orders for authenticated user.
+Get all orders for authenticated user with pagination.
 
 **Endpoint:** `GET /orders`
 
@@ -741,9 +741,16 @@ Authorization: Bearer <token>
 ```
 
 **Query Parameters:**
-- `status` (optional): Filter by status (`PENDING`, `PREPARING`, `READY`, `COMPLETED`, `CANCELLED`)
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10, max: 100)
+- `status` (optional): Filter by order status (`WAITING`, `COOKING`, `READY`, `COMPLETED`)
+- `paymentStatus` (optional): Filter by payment status (`UNPAID`, `PAID`)
 
-**Example:** `GET /orders?status=PENDING`
+**Examples:**
+- `GET /orders?page=1&limit=10` - Get all orders
+- `GET /orders?paymentStatus=UNPAID` - Get pending/unpaid transactions
+- `GET /orders?status=WAITING&paymentStatus=PAID` - Get paid orders waiting to be cooked
+- `GET /orders?status=COMPLETED&page=2&limit=20` - Get completed orders (page 2)
 
 **Response (200):**
 ```json
@@ -755,25 +762,43 @@ Authorization: Bearer <token>
       "id": "uuid",
       "userId": "uuid",
       "canteenId": "uuid",
-      "totalAmount": 18.97,
-      "status": "PENDING",
-      "notes": "No onions please",
+      "totalPrice": 18.97,
+      "status": "WAITING",
+      "paymentStatus": "PAID",
       "createdAt": "2026-02-05T10:00:00.000Z",
       "canteen": {
+        "id": "uuid",
         "name": "Campus Canteen"
       },
       "items": [
         {
+          "id": "uuid",
           "menuItemId": "uuid",
           "quantity": 2,
-          "price": 5.99,
+          "price": 11.98,
           "menuItem": {
-            "name": "Burger"
+            "id": "uuid",
+            "name": "Burger",
+            "price": 5.99
           }
         }
-      ]
+      ],
+      "payment": {
+        "id": "uuid",
+        "amount": 18.97,
+        "status": "SUCCESS"
+      },
+      "review": null
     }
-  ]
+  ],
+  "pagination": {
+    "total": 45,
+    "totalPages": 5,
+    "currentPage": 1,
+    "limit": 10,
+    "hasNextPage": true,
+    "hasPreviousPage": false
+  }
 }
 ```
 

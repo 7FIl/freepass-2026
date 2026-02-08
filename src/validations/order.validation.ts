@@ -43,3 +43,26 @@ export const createReviewSchema = z.object({
 });
 
 export type CreateReviewInput = z.infer<typeof createReviewSchema>;
+
+export const paginationSchema = z.object({
+  page: z
+    .string()
+    .optional()
+    .default('1')
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive()),
+  limit: z
+    .string()
+    .optional()
+    .default('10')
+    .transform((val) => parseInt(val, 10))
+    .pipe(z.number().int().positive().max(100)),
+  status: z
+    .enum(['WAITING', 'COOKING', 'READY', 'COMPLETED'])
+    .optional(),
+  paymentStatus: z
+    .enum(['UNPAID', 'PAID'])
+    .optional(),
+});
+
+export type PaginationInput = z.infer<typeof paginationSchema>;

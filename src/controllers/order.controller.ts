@@ -6,6 +6,7 @@ import {
   updateOrderStatusSchema,
   makePaymentSchema,
   createReviewSchema,
+  paginationSchema,
 } from '../validations/order.validation';
 
 export class OrderController {
@@ -46,16 +47,28 @@ export class OrderController {
   async getUserOrders(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.user!;
-      const orders = await orderService.getUserOrders(userId);
+      const { page, limit, status, paymentStatus } = paginationSchema.parse(req.query);
+      const result = await orderService.getUserOrders(userId, page, limit, status, paymentStatus);
 
       res.status(200).json({
         message: 'Orders retrieved successfully',
-        data: orders,
+        data: result.orders,
+        pagination: result.pagination,
       });
     } catch (error) {
-      res.status(500).json({
-        message: 'Internal server error',
-      });
+      if (error instanceof ZodError) {
+        res.status(400).json({
+          message: 'Validation error',
+          errors: error.issues.map((issue) => ({
+            field: issue.path.join('.'),
+            message: issue.message,
+          })),
+        });
+      } else {
+        res.status(500).json({
+          message: 'Internal server error',
+        });
+      }
     }
   }
 

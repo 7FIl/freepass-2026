@@ -102,28 +102,63 @@ export class OrderService {
     return order;
   }
 
-  async getUserOrders(userId: string) {
-    const orders = await prisma.order.findMany({
-      where: { userId },
-      include: {
-        items: {
-          include: {
-            menuItem: true,
-          },
-        },
-        canteen: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        payment: true,
-        review: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async getUserOrders(
+    userId: string,
+    page: number = 1,
+    limit: number = 10,
+    status?: 'WAITING' | 'COOKING' | 'READY' | 'COMPLETED',
+    paymentStatus?: 'UNPAID' | 'PAID'
+  ) {
+    const skip = (page - 1) * limit;
 
-    return orders;
+    const whereClause: any = { userId };
+    if (status) {
+      whereClause.status = status;
+    }
+    if (paymentStatus) {
+      whereClause.paymentStatus = paymentStatus;
+    }
+
+    const [orders, totalCount] = await Promise.all([
+      prisma.order.findMany({
+        where: whereClause,
+        include: {
+          items: {
+            include: {
+              menuItem: true,
+            },
+          },
+          canteen: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          payment: true,
+          review: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      prisma.order.count({
+        where: whereClause,
+      }),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      orders,
+      pagination: {
+        total: totalCount,
+        totalPages,
+        currentPage: page,
+        limit,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 
   async getCanteenOrders(canteenId: string, userId: string, userRole: string) {
