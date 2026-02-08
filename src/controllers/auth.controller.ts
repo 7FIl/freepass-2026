@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import authService from '../services/auth.service';
 import { registerSchema, loginSchema, updateProfileSchema, changePasswordSchema } from '../validations/auth.validation';
-import { AuthRequest } from '../middlewares/auth.middleware';
 import { asyncHandler } from '../utils/asyncHandler';
 import { UnauthorizedError } from '../types/errors';
 
@@ -28,7 +27,7 @@ export class AuthController {
     });
   });
 
-  updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+  updateProfile = asyncHandler(async (req: Request, res: Response) => {
     const validatedData = updateProfileSchema.parse(req.body);
 
     if (!req.user) {
@@ -44,7 +43,7 @@ export class AuthController {
     });
   });
 
-  changePassword = asyncHandler(async (req: AuthRequest, res: Response) => {
+  changePassword = asyncHandler(async (req: Request, res: Response) => {
     const validatedData = changePasswordSchema.parse(req.body);
 
     if (!req.user) {

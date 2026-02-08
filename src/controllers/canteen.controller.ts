@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { ZodError } from 'zod';
 import canteenService from '../services/canteen.service';
 import {
@@ -7,10 +7,9 @@ import {
   createMenuItemSchema,
   updateMenuItemSchema,
 } from '../validations/canteen.validation';
-import { AuthRequest } from '../middlewares/auth.middleware';
 
 export class CanteenController {
-  async createCanteen(req: AuthRequest, res: Response) {
+  async createCanteen(req: Request, res: Response) {
     try {
       const validatedData = createCanteenSchema.parse(req.body);
 
@@ -54,7 +53,7 @@ export class CanteenController {
     }
   }
 
-  async getCanteens(_req: AuthRequest, res: Response) {
+  async getCanteens(_req: Request, res: Response) {
     try {
       const canteens = await canteenService.getCanteens();
 
@@ -78,7 +77,7 @@ export class CanteenController {
     }
   }
 
-  async getCanteenById(req: AuthRequest, res: Response) {
+  async getCanteenById(req: Request, res: Response) {
     try {
       const { canteenId } = req.params;
       const canteen = await canteenService.getCanteenById(canteenId as string);
@@ -103,7 +102,7 @@ export class CanteenController {
     }
   }
 
-  async updateCanteen(req: AuthRequest, res: Response) {
+  async updateCanteen(req: Request, res: Response) {
     try {
       const { canteenId } = req.params;
       const validatedData = updateCanteenSchema.parse(req.body);
@@ -159,7 +158,7 @@ export class CanteenController {
     }
   }
 
-  async toggleCanteenStatus(req: AuthRequest, res: Response) {
+  async toggleCanteenStatus(req: Request, res: Response) {
     try {
       const { canteenId } = req.params;
 
@@ -208,7 +207,7 @@ export class CanteenController {
     }
   }
 
-  async createMenuItem(req: AuthRequest, res: Response) {
+  async createMenuItem(req: Request, res: Response) {
     try {
       const { canteenId } = req.params;
       const validatedData = createMenuItemSchema.parse(req.body);
@@ -264,7 +263,7 @@ export class CanteenController {
     }
   }
 
-  async getMenuItems(req: AuthRequest, res: Response) {
+  async getMenuItems(req: Request, res: Response) {
     try {
       const { canteenId } = req.params;
       const menuItems = await canteenService.getMenuItems(canteenId as string);
@@ -295,7 +294,7 @@ export class CanteenController {
     }
   }
 
-  async updateMenuItem(req: AuthRequest, res: Response) {
+  async updateMenuItem(req: Request, res: Response) {
     try {
       const { canteenId, menuItemId } = req.params;
       const validatedData = updateMenuItemSchema.parse(req.body);
@@ -346,7 +345,7 @@ export class CanteenController {
     }
   }
 
-  async deleteMenuItem(req: AuthRequest, res: Response) {
+  async deleteMenuItem(req: Request, res: Response) {
     try {
       const { canteenId, menuItemId } = req.params;
 

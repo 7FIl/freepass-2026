@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { UnauthorizedError } from '../types/errors';
 
 interface JwtPayload {
   userId: string;
@@ -16,12 +15,16 @@ declare global {
   }
 }
 
-export const authenticate = (req: Request, _res: Response, next: NextFunction): void => {
+export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
   try {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedError('No token provided');
+      res.status(401).json({
+        success: false,
+        message: 'Unauthorized: No token provided',
+      });
+      return;
     }
 
     const token = authHeader.substring(7);
@@ -34,10 +37,9 @@ export const authenticate = (req: Request, _res: Response, next: NextFunction): 
     req.user = decoded;
     next();
   } catch (error) {
-    if (error instanceof UnauthorizedError) {
-      next(error);
-    } else {
-      next(new UnauthorizedError('Invalid or expired token'));
-    }
+    res.status(401).json({
+      success: false,
+      message: 'Unauthorized: Invalid or expired token',
+    });
   }
 };

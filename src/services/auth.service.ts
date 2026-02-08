@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../utils/prisma';
 import { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput } from '../validations/auth.validation';
-import { ConflictError, UnauthorizedError, NotFoundError, BadRequestError } from '../types/errors';
+import { NotFoundError, BadRequestError } from '../types/errors';
 
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is not set');
@@ -22,10 +22,10 @@ export class AuthService {
 
     if (existingUser) {
       if (existingUser.email === email) {
-        throw new ConflictError('Email already in use');
+        throw new BadRequestError('Email already in use');
       }
       if (existingUser.username === username) {
-        throw new ConflictError('Username already in use');
+        throw new BadRequestError('Username already in use');
       }
     }
 
@@ -57,13 +57,13 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedError('Invalid email or password');
+      throw new BadRequestError('Invalid email or password');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedError('Invalid email or password');
+      throw new BadRequestError('Invalid email or password');
     }
 
     const token = jwt.sign(
@@ -111,10 +111,10 @@ export class AuthService {
 
       if (existingUser) {
         if (existingUser.email === email) {
-          throw new ConflictError('Email already in use');
+          throw new BadRequestError('Email already in use');
         }
         if (existingUser.username === username) {
-          throw new ConflictError('Username already in use');
+          throw new BadRequestError('Username already in use');
         }
       }
     }
@@ -151,7 +151,7 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedError('Current password is incorrect');
+      throw new BadRequestError('Current password is incorrect');
     }
 
     if (currentPassword === newPassword) {

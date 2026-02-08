@@ -5,6 +5,7 @@ import {
   CreateMenuItemInput,
   UpdateMenuItemInput,
 } from '../validations/canteen.validation';
+import { NotFoundError, ForbiddenError, BadRequestError } from '../types/errors';
 
 export class CanteenService {
   async createCanteen(ownerId: string, data: CreateCanteenInput) {
@@ -60,7 +61,7 @@ export class CanteenService {
     });
 
     if (!canteen) {
-      throw new Error('Canteen not found');
+      throw new NotFoundError('Canteen not found');
     }
 
     return canteen;
@@ -73,11 +74,11 @@ export class CanteenService {
     });
 
     if (!canteen) {
-      throw new Error('Canteen not found');
+      throw new NotFoundError('Canteen not found');
     }
 
     if (canteen.ownerId !== userId && userRole !== 'ADMIN') {
-      throw new Error('Unauthorized: Only the canteen owner or admin can update this canteen');
+      throw new ForbiddenError('Unauthorized: Only the canteen owner or admin can update this canteen');
     }
 
     const updatedCanteen = await prisma.canteen.update({
@@ -103,11 +104,11 @@ export class CanteenService {
     });
 
     if (!canteen) {
-      throw new Error('Canteen not found');
+      throw new NotFoundError('Canteen not found');
     }
 
     if (canteen.ownerId !== userId && userRole !== 'ADMIN') {
-      throw new Error('Unauthorized: Only the canteen owner or admin can toggle canteen status');
+      throw new ForbiddenError('Unauthorized: Only the canteen owner or admin can toggle canteen status');
     }
 
     const updatedCanteen = await prisma.canteen.update({
@@ -136,11 +137,11 @@ export class CanteenService {
     });
 
     if (!canteen) {
-      throw new Error('Canteen not found');
+      throw new NotFoundError('Canteen not found');
     }
 
     if (canteen.ownerId !== userId && userRole !== 'ADMIN') {
-      throw new Error('Unauthorized: Only the canteen owner or admin can create menu items');
+      throw new ForbiddenError('Unauthorized: Only the canteen owner or admin can create menu items');
     }
 
     const menuItem = await prisma.menuItem.create({
@@ -159,7 +160,7 @@ export class CanteenService {
     });
 
     if (!canteen) {
-      throw new Error('Canteen not found');
+      throw new NotFoundError('Canteen not found');
     }
 
     const menuItems = await prisma.menuItem.findMany({
@@ -186,15 +187,15 @@ export class CanteenService {
     });
 
     if (!menuItem) {
-      throw new Error('Menu item not found');
+      throw new NotFoundError('Menu item not found');
     }
 
     if (menuItem.canteenId !== canteenId) {
-      throw new Error('Menu item does not belong to this canteen');
+      throw new BadRequestError('Menu item does not belong to this canteen');
     }
 
     if (menuItem.canteen.ownerId !== userId && userRole !== 'ADMIN') {
-      throw new Error('Unauthorized: Only the canteen owner or admin can update menu items');
+      throw new ForbiddenError('Unauthorized: Only the canteen owner or admin can update menu items');
     }
 
     const updatedMenuItem = await prisma.menuItem.update({
@@ -216,15 +217,15 @@ export class CanteenService {
     });
 
     if (!menuItem) {
-      throw new Error('Menu item not found');
+      throw new NotFoundError('Menu item not found');
     }
 
     if (menuItem.canteenId !== canteenId) {
-      throw new Error('Menu item does not belong to this canteen');
+      throw new BadRequestError('Menu item does not belong to this canteen');
     }
 
     if (menuItem.canteen.ownerId !== userId && userRole !== 'ADMIN') {
-      throw new Error('Unauthorized: Only the canteen owner or admin can delete menu items');
+      throw new ForbiddenError('Unauthorized: Only the canteen owner or admin can delete menu items');
     }
 
     await prisma.menuItem.delete({

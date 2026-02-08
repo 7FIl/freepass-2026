@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../types/errors';
 import { Prisma } from '@prisma/client';
+import { ZodError } from 'zod';
 
 export const errorHandler = (
   err: Error,
@@ -42,12 +43,14 @@ export const errorHandler = (
     });
   }
 
-  // Handle validation errors (Zod or other)
-  if (err.name === 'ZodError') {
+  // Handle validation errors (Zod)
+  // Check for Zod errors by looking for 'issues' property
+  if ('issues' in err || err.name === 'ZodError' || err instanceof ZodError) {
+    const zodErr = err as any;
     return res.status(400).json({
       success: false,
       message: 'Validation error',
-      errors: (err as any).errors,
+      errors: zodErr.issues || zodErr.errors || [],
     });
   }
 

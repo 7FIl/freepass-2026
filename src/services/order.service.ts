@@ -5,6 +5,7 @@ import {
   MakePaymentInput,
   CreateReviewInput,
 } from '../validations/order.validation';
+import { NotFoundError, ForbiddenError, BadRequestError } from '../types/errors';
 
 export class OrderService {
   async createOrder(userId: string, canteenId: string, data: CreateOrderInput) {
@@ -13,11 +14,11 @@ export class OrderService {
     });
 
     if (!canteen) {
-      throw new Error('Canteen not found');
+      throw new BadRequestError('Canteen not found');
     }
 
     if (!canteen.isOpen) {
-      throw new Error('Canteen is currently closed');
+      throw new BadRequestError('Canteen is currently closed');
     }
 
     let totalPrice = 0;
@@ -29,15 +30,15 @@ export class OrderService {
       });
 
       if (!menuItem) {
-        throw new Error(`Menu item ${item.menuItemId} not found`);
+        throw new BadRequestError(`Menu item ${item.menuItemId} not found`);
       }
 
       if (menuItem.canteenId !== canteenId) {
-        throw new Error(`Menu item ${item.menuItemId} does not belong to this canteen`);
+        throw new BadRequestError(`Menu item ${item.menuItemId} does not belong to this canteen`);
       }
 
       if (menuItem.stock < item.quantity) {
-        throw new Error(`Insufficient stock for ${menuItem.name}. Available: ${menuItem.stock}`);
+        throw new BadRequestError(`Insufficient stock for ${menuItem.name}. Available: ${menuItem.stock}`);
       }
 
       totalPrice += menuItem.price * item.quantity;
@@ -132,11 +133,11 @@ export class OrderService {
     });
 
     if (!canteen) {
-      throw new Error('Canteen not found');
+      throw new NotFoundError('Canteen not found');
     }
 
     if (canteen.ownerId !== userId && userRole !== 'ADMIN') {
-      throw new Error('Unauthorized: Only the canteen owner or admin can view orders');
+      throw new ForbiddenError('Unauthorized: Only the canteen owner or admin can view orders');
     }
 
     const orders = await prisma.order.findMany({
@@ -174,15 +175,15 @@ export class OrderService {
     });
 
     if (!order) {
-      throw new Error('Order not found');
+      throw new BadRequestError('Order not found');
     }
 
     if (order.canteen.ownerId !== userId && userRole !== 'ADMIN') {
-      throw new Error('Unauthorized: Only the canteen owner or admin can update order status');
+      throw new ForbiddenError('Unauthorized: Only the canteen owner or admin can update order status');
     }
 
     if (order.paymentStatus !== 'PAID') {
-      throw new Error('Cannot update status: Order payment is not completed');
+      throw new BadRequestError('Cannot update status: Order payment is not completed');
     }
 
     const updatedOrder = await prisma.order.update({
@@ -222,19 +223,19 @@ export class OrderService {
     });
 
     if (!order) {
-      throw new Error('Order not found');
+      throw new BadRequestError('Order not found');
     }
 
     if (order.userId !== userId) {
-      throw new Error('Unauthorized: You can only pay for your own orders');
+      throw new ForbiddenError('Unauthorized: You can only pay for your own orders');
     }
 
     if (order.paymentStatus === 'PAID') {
-      throw new Error('Order has already been paid');
+      throw new BadRequestError('Order has already been paid');
     }
 
     if (Math.abs(data.amount - order.totalPrice) > 0.01) {
-      throw new Error(`Amount mismatch. Expected: ${order.totalPrice}, Received: ${data.amount}`);
+      throw new BadRequestError(`Amount mismatch. Expected: ${order.totalPrice}, Received: ${data.amount}`);
     }
 
     const payment = await prisma.payment.create({
@@ -285,19 +286,19 @@ export class OrderService {
     });
 
     if (!order) {
-      throw new Error('Order not found');
+      throw new BadRequestError('Order not found');
     }
 
     if (order.userId !== userId) {
-      throw new Error('Unauthorized: You can only review your own orders');
+      throw new ForbiddenError('Unauthorized: You can only review your own orders');
     }
 
     if (order.status !== 'COMPLETED') {
-      throw new Error('You can only review completed orders');
+      throw new BadRequestError('You can only review completed orders');
     }
 
     if (order.review) {
-      throw new Error('You have already reviewed this order');
+      throw new BadRequestError('You have already reviewed this order');
     }
 
     const review = await prisma.review.create({
@@ -335,11 +336,11 @@ export class OrderService {
     });
 
     if (!review) {
-      throw new Error('Review not found');
+      throw new NotFoundError('Review not found');
     }
 
     if (review.order.canteen.ownerId !== userId && userRole !== 'ADMIN') {
-      throw new Error('Unauthorized: Only the canteen owner or admin can delete reviews');
+      throw new ForbiddenError('Unauthorized: Only the canteen owner or admin can delete reviews');
     }
 
     await prisma.review.delete({

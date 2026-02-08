@@ -1,14 +1,13 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { ZodError } from 'zod';
 import adminService from '../services/admin.service';
 import {
   createUserSchema,
   updateUserSchema,
 } from '../validations/admin.validation';
-import { AuthRequest } from '../middlewares/auth.middleware';
 
 export class AdminController {
-  async createUser(req: AuthRequest, res: Response): Promise<void> {
+  async createUser(req: Request, res: Response): Promise<void> {
     try {
       const body = req.body;
       const validatedData = createUserSchema.parse(body);
@@ -47,7 +46,7 @@ export class AdminController {
     }
   }
 
-  async getAllUsers(req: AuthRequest, res: Response): Promise<void> {
+  async getAllUsers(req: Request, res: Response): Promise<void> {
     try {
       if (req.user!.role !== 'ADMIN') {
         res.status(403).json({
@@ -72,7 +71,7 @@ export class AdminController {
     }
   }
 
-  async getUserById(req: AuthRequest, res: Response): Promise<void> {
+  async getUserById(req: Request, res: Response): Promise<void> {
     try {
       if (req.user!.role !== 'ADMIN') {
         res.status(403).json({
@@ -101,7 +100,7 @@ export class AdminController {
     }
   }
 
-  async updateUser(req: AuthRequest, res: Response): Promise<void> {
+  async updateUser(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.params;
       const body = req.body;
@@ -141,7 +140,7 @@ export class AdminController {
     }
   }
 
-  async deleteUser(req: AuthRequest, res: Response): Promise<void> {
+  async deleteUser(req: Request, res: Response): Promise<void> {
     try {
       if (req.user!.role !== 'ADMIN') {
         res.status(403).json({
@@ -167,7 +166,7 @@ export class AdminController {
     }
   }
 
-  async getCanteenOwners(req: AuthRequest, res: Response): Promise<void> {
+  async getCanteenOwners(req: Request, res: Response): Promise<void> {
     try {
       if (req.user!.role !== 'ADMIN') {
         res.status(403).json({

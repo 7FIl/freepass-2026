@@ -7,10 +7,9 @@ import {
   makePaymentSchema,
   createReviewSchema,
 } from '../validations/order.validation';
-import { AuthRequest } from '../middlewares/auth.middleware';
 
 export class OrderController {
-  async createOrder(req: AuthRequest, res: Response): Promise<void> {
+  async createOrder(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.user!;
       const { canteenId } = req.params;
@@ -44,7 +43,7 @@ export class OrderController {
     }
   }
 
-  async getUserOrders(req: AuthRequest, res: Response): Promise<void> {
+  async getUserOrders(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.user!;
       const orders = await orderService.getUserOrders(userId);
@@ -60,7 +59,7 @@ export class OrderController {
     }
   }
 
-  async getCanteenOrders(req: AuthRequest, res: Response): Promise<void> {
+  async getCanteenOrders(req: Request, res: Response): Promise<void> {
     try {
       const { userId, role } = req.user!;
       const { canteenId } = req.params;
@@ -84,7 +83,7 @@ export class OrderController {
     }
   }
 
-  async updateOrderStatus(req: AuthRequest, res: Response): Promise<void> {
+  async updateOrderStatus(req: Request, res: Response): Promise<void> {
     try {
       const { userId, role } = req.user!;
       const { orderId } = req.params;
@@ -118,7 +117,7 @@ export class OrderController {
     }
   }
 
-  async makePayment(req: AuthRequest, res: Response): Promise<void> {
+  async makePayment(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.user!;
       const { orderId } = req.params;
@@ -152,7 +151,7 @@ export class OrderController {
     }
   }
 
-  async createReview(req: AuthRequest, res: Response): Promise<void> {
+  async createReview(req: Request, res: Response): Promise<void> {
     try {
       const { userId } = req.user!;
       const { orderId } = req.params;
@@ -186,7 +185,7 @@ export class OrderController {
     }
   }
 
-  async deleteReview(req: AuthRequest, res: Response): Promise<void> {
+  async deleteReview(req: Request, res: Response): Promise<void> {
     try {
       const { userId, role } = req.user!;
       const { reviewId } = req.params;

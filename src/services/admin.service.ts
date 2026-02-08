@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import prisma from '../utils/prisma';
 import { CreateUserInput, UpdateUserInput } from '../validations/admin.validation';
+import { BadRequestError, NotFoundError } from '../types/errors';
 
 export class AdminService {
   async createUser(data: CreateUserInput) {
@@ -12,10 +13,10 @@ export class AdminService {
 
     if (existingUser) {
       if (existingUser.email === data.email) {
-        throw new Error('Email already in use');
+        throw new BadRequestError('Email already in use');
       }
       if (existingUser.username === data.username) {
-        throw new Error('Username already in use');
+        throw new BadRequestError('Username already in use');
       }
     }
 
@@ -83,7 +84,7 @@ export class AdminService {
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
 
     return user;
@@ -95,7 +96,7 @@ export class AdminService {
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
 
     if (data.email && data.email !== user.email) {
@@ -103,7 +104,7 @@ export class AdminService {
         where: { email: data.email },
       });
       if (existingEmail) {
-        throw new Error('Email already in use');
+        throw new BadRequestError('Email already in use');
       }
     }
 
@@ -112,7 +113,7 @@ export class AdminService {
         where: { username: data.username },
       });
       if (existingUsername) {
-        throw new Error('Username already in use');
+        throw new BadRequestError('Username already in use');
       }
     }
 
@@ -141,7 +142,7 @@ export class AdminService {
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
 
     if (user.role === 'CANTEEN_OWNER') {
