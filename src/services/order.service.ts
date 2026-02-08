@@ -56,21 +56,19 @@ export class OrderService {
         });
       }
 
-      const stockUpdates = data.items.map((item) =>
-        tx.menuItem.update({
-          where: { id: item.menuItemId },
-          data: {
-            stock: {
-              decrement: item.quantity,
-            },
+      for (const item of data.items) {
+        const result = await tx.menuItem.updateMany({
+          where: {
+            id: item.menuItemId,
+            stock: { gte: item.quantity },
           },
-        })
-      );
-      const updatedItems = await Promise.all(stockUpdates);
+          data: {
+            stock: { decrement: item.quantity },
+          },
+        });
 
-      for (const updatedItem of updatedItems) {
-        if (updatedItem.stock < 0) {
-          throw new BadRequestError(`Race condition detected: Insufficient stock for item ${updatedItem.id}`);
+        if (result.count === 0) {
+          throw new BadRequestError(`Insufficient stock for item. Please try again.`);
         }
       }
 
@@ -113,10 +111,6 @@ export class OrderService {
       });
 
       return newOrder;
-    }, {
-      isolationLevel: 'Serializable',
-      maxWait: 5000,
-      timeout: 10000,
     });
 
     return order;
@@ -273,25 +267,39 @@ export class OrderService {
   }
 
   async makePayment(orderId: string, userId: string, data: MakePaymentInput) {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+
+    if (!order) {
+      throw new BadRequestError('Order not found');
+    }
+
+    if (order.userId !== userId) {
+      throw new ForbiddenError('Unauthorized: You can only pay for your own orders');
+    }
+
+    if (order.paymentStatus === 'PAID') {
+      throw new BadRequestError('Order has already been paid');
+    }
+
+    if (Math.abs(data.amount - order.totalPrice) > 0.01) {
+      throw new BadRequestError(`Amount mismatch. Expected: ${order.totalPrice}, Received: ${data.amount}`);
+    }
+
     const result = await prisma.$transaction(async (tx) => {
-      const order = await tx.order.findUnique({
-        where: { id: orderId },
+      const updateResult = await tx.order.updateMany({
+        where: {
+          id: orderId,
+          paymentStatus: 'UNPAID',
+        },
+        data: {
+          paymentStatus: 'PAID',
+        },
       });
 
-      if (!order) {
-        throw new BadRequestError('Order not found');
-      }
-
-      if (order.userId !== userId) {
-        throw new ForbiddenError('Unauthorized: You can only pay for your own orders');
-      }
-
-      if (order.paymentStatus === 'PAID') {
+      if (updateResult.count === 0) {
         throw new BadRequestError('Order has already been paid');
-      }
-
-      if (Math.abs(data.amount - order.totalPrice) > 0.01) {
-        throw new BadRequestError(`Amount mismatch. Expected: ${order.totalPrice}, Received: ${data.amount}`);
       }
 
       const payment = await tx.payment.create({
@@ -302,11 +310,8 @@ export class OrderService {
         },
       });
 
-      const updatedOrder = await tx.order.update({
+      const updatedOrder = await tx.order.findUnique({
         where: { id: orderId },
-        data: {
-          paymentStatus: 'PAID',
-        },
         include: {
           items: {
             include: {
@@ -331,10 +336,6 @@ export class OrderService {
       });
 
       return { payment, order: updatedOrder };
-    }, {
-      isolationLevel: 'Serializable',
-      maxWait: 5000,
-      timeout: 10000,
     });
 
     return result;
