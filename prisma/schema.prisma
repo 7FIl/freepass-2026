@@ -29,6 +29,7 @@ enum OrderStatus {
 enum PaymentStatus {
   UNPAID
   PAID
+  FAILED
 }
 
 model User {
@@ -101,7 +102,7 @@ model Order {
   updatedAt     DateTime      @updatedAt
 
   items    OrderItem[]
-  payment  Payment?
+  payments Payment[]
   review   Review?
 
   @@index([userId])
@@ -134,14 +135,16 @@ model OrderItem {
 
 model Payment {
   id        String        @id @default(uuid())
-  orderId   String        @unique
+  orderId   String
   order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
   amount    Float
   status    PaymentStatus @default(UNPAID)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
 
+  @@index([orderId])
   @@index([status])
+  @@index([orderId, status])
   @@index([createdAt])
   @@map("payments")
 }

@@ -148,7 +148,7 @@ export class OrderService {
               name: true,
             },
           },
-          payment: true,
+          payments: true,
           review: true,
         },
         orderBy: { createdAt: 'desc' },
@@ -204,7 +204,7 @@ export class OrderService {
             email: true,
           },
         },
-        payment: true,
+        payments: true,
         review: true,
       },
       orderBy: { createdAt: 'desc' },
@@ -259,7 +259,7 @@ export class OrderService {
             name: true,
           },
         },
-        payment: true,
+        payments: true,
       },
     });
 
@@ -331,7 +331,7 @@ export class OrderService {
               name: true,
             },
           },
-          payment: true,
+          payments: true,
         },
       });
 

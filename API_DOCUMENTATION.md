@@ -950,11 +950,13 @@ Authorization: Bearer <token>
           }
         }
       ],
-      "payment": {
-        "id": "uuid",
-        "amount": 18.97,
-        "status": "SUCCESS"
-      },
+      "payments": [
+        {
+          "id": "uuid",
+          "amount": 18.97,
+          "status": "PAID"
+        }
+      ],
       "review": null
     }
   ],
