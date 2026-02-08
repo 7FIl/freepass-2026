@@ -1,46 +1,43 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { UnauthorizedError } from '../types/errors';
 
-if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is not set');
+interface JwtPayload {
+  userId: string;
+  email: string;
+  role: string;
 }
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
-export interface AuthRequest extends Request {
-  user?: {
-    userId: string;
-    email: string;
-    role: string;
-  };
+declare global {
+  namespace Express {
+    interface Request {
+      user?: JwtPayload;
+    }
+  }
 }
 
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void => {
+export const authenticate = (req: Request, _res: Response, next: NextFunction): void => {
   try {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      res.status(401).json({
-        success: false,
-        message: 'Unauthorized',
-      });
-      return;
+      throw new UnauthorizedError('No token provided');
     }
 
     const token = authHeader.substring(7);
 
-    const decoded = jwt.verify(token, JWT_SECRET) as {
-      userId: string;
-      email: string;
-      role: string;
-    };
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || 'default-secret-key',
+    ) as JwtPayload;
 
     req.user = decoded;
     next();
   } catch (error) {
-    res.status(401).json({
-      success: false,
-      message: 'Invalid or expired token',
-    });
+    if (error instanceof UnauthorizedError) {
+      next(error);
+    } else {
+      next(new UnauthorizedError('Invalid or expired token'));
+    }
   }
 };

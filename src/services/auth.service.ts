@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../utils/prisma';
 import { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput } from '../validations/auth.validation';
+import { ConflictError, UnauthorizedError, NotFoundError, BadRequestError } from '../types/errors';
 
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is not set');
@@ -21,10 +22,10 @@ export class AuthService {
 
     if (existingUser) {
       if (existingUser.email === email) {
-        throw new Error('Email already in use');
+        throw new ConflictError('Email already in use');
       }
       if (existingUser.username === username) {
-        throw new Error('Username already in use');
+        throw new ConflictError('Username already in use');
       }
     }
 
@@ -56,13 +57,13 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new Error('Invalid email or password');
+      throw new UnauthorizedError('Invalid email or password');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      throw new Error('Invalid email or password');
+      throw new UnauthorizedError('Invalid email or password');
     }
 
     const token = jwt.sign(
@@ -90,7 +91,7 @@ export class AuthService {
     const { username, email } = data;
 
     if (!username && !email) {
-      throw new Error('At least one field must be provided for update');
+      throw new BadRequestError('At least one field must be provided for update');
     }
 
     if (username || email) {
@@ -110,10 +111,10 @@ export class AuthService {
 
       if (existingUser) {
         if (existingUser.email === email) {
-          throw new Error('Email already in use');
+          throw new ConflictError('Email already in use');
         }
         if (existingUser.username === username) {
-          throw new Error('Username already in use');
+          throw new ConflictError('Username already in use');
         }
       }
     }
@@ -144,17 +145,17 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
 
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
 
     if (!isPasswordValid) {
-      throw new Error('Current password is incorrect');
+      throw new UnauthorizedError('Current password is incorrect');
     }
 
     if (currentPassword === newPassword) {
-      throw new Error('New password must be different from current password');
+      throw new BadRequestError('New password must be different from current password');
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
