@@ -230,7 +230,7 @@ describe('Auth API - Edge Cases', () => {
         });
 
       expect(res.status).toBe(200);
-      expect(res.body.data).toHaveProperty('token');
+      expect(res.body.data).toHaveProperty('accessToken');
       expect(res.body.data.user.email).toBe('auth_login@gmail.com');
     });
 
@@ -300,9 +300,9 @@ describe('Auth API - Edge Cases', () => {
           password: 'TestPassword123',
         });
 
-      expect(res.body.data.token).toBeDefined();
+      expect(res.body.data.accessToken).toBeDefined();
       // Token should be JWT format (three parts separated by dots)
-      expect(res.body.data.token.split('.').length).toBe(3);
+      expect(res.body.data.accessToken.split('.').length).toBe(3);
     });
   });
 
@@ -325,7 +325,7 @@ describe('Auth API - Edge Cases', () => {
           password: 'TestPassword123',
         });
 
-      token = loginRes.body.data.token;
+      token = loginRes.body.data.accessToken;
     });
 
     it('should update profile with valid data', async () => {

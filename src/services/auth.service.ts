@@ -112,7 +112,6 @@ export class AuthService {
     const refreshToken = await this.createRefreshToken(user.id);
 
     return {
-      token: accessToken,
       accessToken,
       refreshToken,
       expiresIn: 900,

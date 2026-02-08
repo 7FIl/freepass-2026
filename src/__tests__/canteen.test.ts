@@ -47,7 +47,7 @@ describe('Canteen API - Edge Cases', () => {
         email: 'canteen_owner@gmail.com',
         password: 'TestPassword123',
       });
-    ownerToken = ownerLoginRes.body.data.token;
+    ownerToken = ownerLoginRes.body.data.accessToken;
 
     // Create regular user
     await request(app)
@@ -64,7 +64,7 @@ describe('Canteen API - Edge Cases', () => {
         email: 'canteen_user@gmail.com',
         password: 'TestPassword123',
       });
-    userToken = userLoginRes.body.data.token;
+    userToken = userLoginRes.body.data.accessToken;
   });
 
   afterAll(async () => {

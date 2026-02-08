@@ -46,7 +46,7 @@ describe('Admin API - Edge Cases', () => {
         email: 'admin@gmail.com',
         password: 'AdminPassword123',
       });
-    adminToken = adminLoginRes.body.data.token;
+    adminToken = adminLoginRes.body.data.accessToken;
   });
 
   afterAll(async () => {
@@ -106,7 +106,7 @@ describe('Admin API - Edge Cases', () => {
           email: 'admin_regularuser@gmail.com',
           password: 'TestPassword123',
         });
-      const userToken = userLoginRes.body.data.token;
+      const userToken = userLoginRes.body.data.accessToken;
 
       const res = await request(app)
         .post('/api/admin/users')
@@ -252,7 +252,7 @@ describe('Admin API - Edge Cases', () => {
           email: 'normaluser2@gmail.com',
           password: 'TestPassword123',
         });
-      const userToken = userLoginRes.body.data.token;
+      const userToken = userLoginRes.body.data.accessToken;
 
       const res = await request(app)
         .get('/api/admin/users')
@@ -311,7 +311,7 @@ describe('Admin API - Edge Cases', () => {
           email: 'normaluser3@gmail.com',
           password: 'TestPassword123',
         });
-      const userToken = userLoginRes.body.data.token;
+      const userToken = userLoginRes.body.data.accessToken;
 
       const res = await request(app)
         .get(`/api/admin/users/${userId}`)
@@ -393,7 +393,7 @@ describe('Admin API - Edge Cases', () => {
           email: 'normaluser4@gmail.com',
           password: 'TestPassword123',
         });
-      const userToken = userLoginRes.body.data.token;
+      const userToken = userLoginRes.body.data.accessToken;
 
       const res = await request(app)
         .put(`/api/admin/users/${userId}`)
@@ -457,7 +457,7 @@ describe('Admin API - Edge Cases', () => {
           email: 'normaluser5@gmail.com',
           password: 'TestPassword123',
         });
-      const userToken = userLoginRes.body.data.token;
+      const userToken = userLoginRes.body.data.accessToken;
 
       const res = await request(app)
         .delete(`/api/admin/users/${userId}`)
@@ -510,7 +510,7 @@ describe('Admin API - Edge Cases', () => {
           email: 'normaluser6@gmail.com',
           password: 'TestPassword123',
         });
-      const userToken = userLoginRes.body.data.token;
+      const userToken = userLoginRes.body.data.accessToken;
 
       const res = await request(app)
         .get('/api/admin/canteen-owners')

@@ -51,7 +51,7 @@ describe('Order API - Edge Cases', () => {
         email: 'order_owner@gmail.com',
         password: 'TestPassword123',
       });
-    ownerToken = ownerLoginRes.body.data.token;
+    ownerToken = ownerLoginRes.body.data.accessToken;
 
     // Create customer user
     await request(app)
@@ -68,7 +68,7 @@ describe('Order API - Edge Cases', () => {
         email: 'order_customer@gmail.com',
         password: 'TestPassword123',
       });
-    userToken = userLoginRes.body.data.token;
+    userToken = userLoginRes.body.data.accessToken;
 
     // Create canteen
     const canteenRes = await request(app)
@@ -762,7 +762,7 @@ describe('Order API - Edge Cases', () => {
           email: 'order_otheruser@gmail.com',
           password: 'TestPassword123',
         });
-      const otherUserToken = otherUserLoginRes.body.data.token;
+      const otherUserToken = otherUserLoginRes.body.data.accessToken;
 
       // Get the review from the completed order created in previous tests
       const completedOrder = await request(app)
