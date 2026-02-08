@@ -1,7 +1,5 @@
 import { z } from 'zod';
 
-// Note: Email domain validation is now done dynamically via database in the service layer
-
 export const registerSchema = z.object({
   username: z
     .string()

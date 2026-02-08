@@ -51,7 +51,7 @@ Create a new user account.
 ---
 
 ### 2. Login
-Authenticate and receive a JWT token.
+Authenticate and receive access and refresh tokens.
 
 **Endpoint:** `POST /auth/login`
 
@@ -71,7 +71,9 @@ Authenticate and receive a JWT token.
   "success": true,
   "message": "Login successful",
   "data": {
-    "token": "jwt_token_here",
+    "accessToken": "jwt_access_token_here",
+    "refreshToken": "refresh_token_here",
+    "expiresIn": 900,
     "user": {
       "id": "uuid",
       "username": "johndoe",
@@ -80,6 +82,13 @@ Authenticate and receive a JWT token.
     }
   }
 }
+```
+
+**Notes:**
+- `accessToken`: JWT valid for 15 minutes
+- `refreshToken`: Token valid for 7 days, used to obtain new access tokens
+- `expiresIn`: Access token expiry in seconds
+- Legacy `token` field is also returned for backward compatibility
 ```
 
 ---
@@ -148,6 +157,86 @@ Authorization: Bearer <token>
 {
   "success": true,
   "message": "Password changed successfully"
+}
+```
+
+---
+
+### 5. Refresh Token
+Exchange a valid refresh token for a new access token.
+
+**Endpoint:** `POST /auth/refresh`
+
+**Request Body:**
+```json
+{
+  "refreshToken": "refresh_token_here"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Token refreshed successfully",
+  "data": {
+    "accessToken": "new_jwt_access_token",
+    "expiresIn": 900,
+    "user": {
+      "id": "uuid",
+      "username": "johndoe",
+      "email": "johndoe@gmail.com",
+      "role": "USER"
+    }
+  }
+}
+```
+
+**Error Responses:**
+- `401 Unauthorized`: Invalid, revoked, or expired refresh token
+
+---
+
+### 6. Logout
+Revoke a specific refresh token.
+
+**Endpoint:** `POST /auth/logout`
+
+**Request Body:**
+```json
+{
+  "refreshToken": "refresh_token_here"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Logged out successfully"
+}
+```
+
+**Error Responses:**
+- `400 Bad Request`: Invalid or already revoked token
+
+---
+
+### 7. Logout All Devices
+Revoke all refresh tokens for the authenticated user. Requires authentication.
+
+**Endpoint:** `POST /auth/logout-all`
+
+**Headers:**
+```
+Authorization: Bearer <access_token>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Logged out from all devices successfully"
 }
 ```
 
@@ -352,6 +441,108 @@ Authorization: Bearer <admin_token>
   ]
 }
 ```
+
+---
+
+### 7. Get Allowed Email Domains
+Retrieve list of allowed email domains for registration.
+
+**Endpoint:** `GET /admin/allowed-domains`
+
+**Headers:**
+```
+Authorization: Bearer <admin_token>
+```
+
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 50)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Allowed domains retrieved successfully",
+  "data": {
+    "data": [
+      {
+        "id": "uuid",
+        "domain": "gmail.com",
+        "createdAt": "2026-02-05T10:00:00.000Z"
+      },
+      {
+        "id": "uuid",
+        "domain": "outlook.com",
+        "createdAt": "2026-02-05T10:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 50,
+      "total": 10,
+      "totalPages": 1
+    }
+  }
+}
+```
+
+---
+
+### 8. Add Allowed Email Domain
+Add a new allowed email domain for registration.
+
+**Endpoint:** `POST /admin/allowed-domains`
+
+**Headers:**
+```
+Authorization: Bearer <admin_token>
+```
+
+**Request Body:**
+```json
+{
+  "domain": "example.com"
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "message": "Domain added successfully",
+  "data": {
+    "id": "uuid",
+    "domain": "example.com",
+    "createdAt": "2026-02-05T10:00:00.000Z"
+  }
+}
+```
+
+**Error Responses:**
+- `400 Bad Request`: Domain already exists
+
+---
+
+### 9. Delete Allowed Email Domain
+Remove an allowed email domain.
+
+**Endpoint:** `DELETE /admin/allowed-domains/:domainId`
+
+**Headers:**
+```
+Authorization: Bearer <admin_token>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Domain deleted successfully"
+}
+```
+
+**Error Responses:**
+- `404 Not Found`: Domain not found
 
 ---
 

@@ -3,9 +3,6 @@ import cache, { CACHE_TTL } from './cache';
 
 const CACHE_KEY = 'allowed_email_domains';
 
-/**
- * Get all allowed email domains from database (cached)
- */
 export async function getAllowedEmailDomains(): Promise<string[]> {
   return cache.getOrSet(
     CACHE_KEY,
@@ -15,13 +12,10 @@ export async function getAllowedEmailDomains(): Promise<string[]> {
       });
       return domains.map(d => d.domain.toLowerCase());
     },
-    CACHE_TTL.CANTEENS, // 5 minutes cache
+    CACHE_TTL.CANTEENS,
   );
 }
 
-/**
- * Check if an email domain is allowed
- */
 export async function isEmailDomainAllowed(email: string): Promise<boolean> {
   const domain = email.split('@')[1]?.toLowerCase();
   if (!domain) return false;
@@ -30,9 +24,7 @@ export async function isEmailDomainAllowed(email: string): Promise<boolean> {
   return allowedDomains.includes(domain);
 }
 
-/**
- * Invalidate the allowed domains cache (call after add/update/delete)
- */
 export function invalidateAllowedDomainsCache(): void {
   cache.del(CACHE_KEY);
 }
+

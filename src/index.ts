@@ -23,7 +23,6 @@ app.get('/', (_req: Request, res: Response) => {
 });
 
 app.get('/health', asyncHandler(async (_req: Request, res: Response) => {
-  // Check database connection
   await prisma.$queryRaw`SELECT 1`;
   
   res.json({
@@ -36,10 +35,8 @@ app.get('/health', asyncHandler(async (_req: Request, res: Response) => {
 
 app.use('/api', routes);
 
-// Global error handler (must be last)
 app.use(errorHandler);
 
-// 404 handler
 app.use((_req: Request, res: Response) => {
   res.status(404).json({
     success: false,

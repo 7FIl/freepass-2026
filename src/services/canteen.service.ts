@@ -26,7 +26,6 @@ export class CanteenService {
       },
     });
 
-    // Invalidate canteens list cache
     cache.del(CACHE_KEYS.CANTEENS_LIST);
 
     return canteen;
@@ -110,7 +109,6 @@ export class CanteenService {
       },
     });
 
-    // Invalidate caches
     cache.del([CACHE_KEYS.CANTEENS_LIST, CACHE_KEYS.CANTEEN_BY_ID(canteenId)]);
 
     return updatedCanteen;
@@ -137,7 +135,6 @@ export class CanteenService {
       },
     });
 
-    // Invalidate menu and canteen caches
     cache.del([
       CACHE_KEYS.MENU_ITEMS(canteenId),
       CACHE_KEYS.CANTEEN_BY_ID(canteenId),
@@ -148,7 +145,6 @@ export class CanteenService {
   }
 
   async getMenuItems(canteenId: string) {
-    // First check if canteen exists (not cached to ensure fresh check)
     const canteen = await prisma.canteen.findUnique({
       where: { id: canteenId },
     });
@@ -202,7 +198,6 @@ export class CanteenService {
       data,
     });
 
-    // Invalidate menu and canteen caches
     cache.del([
       CACHE_KEYS.MENU_ITEMS(canteenId),
       CACHE_KEYS.CANTEEN_BY_ID(canteenId),
@@ -238,7 +233,6 @@ export class CanteenService {
       where: { id: menuItemId },
     });
 
-    // Invalidate menu and canteen caches
     cache.del([
       CACHE_KEYS.MENU_ITEMS(canteenId),
       CACHE_KEYS.CANTEEN_BY_ID(canteenId),

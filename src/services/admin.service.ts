@@ -6,7 +6,6 @@ import { invalidateAllowedDomainsCache, isEmailDomainAllowed } from '../utils/al
 
 export class AdminService {
   async createUser(data: CreateUserInput) {
-    // Validate email domain against database
     const domainAllowed = await isEmailDomainAllowed(data.email);
     if (!domainAllowed) {
       throw new BadRequestError('Email domain not allowed');
@@ -107,7 +106,6 @@ export class AdminService {
     }
 
     if (data.email && data.email !== user.email) {
-      // Validate email domain against database
       const domainAllowed = await isEmailDomainAllowed(data.email);
       if (!domainAllowed) {
         throw new BadRequestError('Email domain not allowed');
@@ -210,8 +208,6 @@ export class AdminService {
     };
   }
 
-  // ==================== Allowed Email Domains ====================
-
   async getAllowedDomains(page: number = 1, limit: number = 50) {
     const skip = (page - 1) * limit;
 
@@ -260,7 +256,6 @@ export class AdminService {
       },
     });
 
-    // Invalidate cache
     invalidateAllowedDomainsCache();
 
     return created;
@@ -279,7 +274,6 @@ export class AdminService {
       where: { id: domainId },
     });
 
-    // Invalidate cache
     invalidateAllowedDomainsCache();
 
     return { message: 'Domain deleted successfully' };

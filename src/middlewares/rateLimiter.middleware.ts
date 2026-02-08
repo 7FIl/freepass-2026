@@ -1,30 +1,17 @@
 import rateLimit from 'express-rate-limit';
 import { Request } from 'express';
 
-/**
- * Custom key generator that combines IP with user identifier (email for auth routes)
- * This prevents users on shared IPs (public WiFi) from being affected by others' actions
- */
 const createKeyGenerator = (identifierField: string) => (req: Request): string => {
   const ip = req.ip || req.socket?.remoteAddress || 'unknown';
   const identifier = req.body?.[identifierField] || '';
-  
-  // Combine IP + identifier for unique rate limiting per user per IP
-  // This way, different users on the same IP won't affect each other
   return `${ip}:${identifier.toLowerCase()}`;
 };
 
-/**
- * Fallback key generator for authenticated routes - uses user ID if available
- */
 export const createAuthenticatedKeyGenerator = () => (req: Request): string => {
   const ip = req.ip || req.socket?.remoteAddress || 'unknown';
-  
-  // If user is authenticated, use their ID instead of just IP
   if (req.user?.userId) {
     return `user:${req.user.userId}`;
   }
-  
   return ip;
 };
 
@@ -34,8 +21,8 @@ export const registrationLimiter = rateLimit({
   message: 'Too many registration attempts, please try again after a minute',
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: createKeyGenerator('email'), // Rate limit per IP + email combination
-  validate: { keyGeneratorIpFallback: false }, // We use custom key, not just IP
+  keyGenerator: createKeyGenerator('email'),
+  validate: { keyGeneratorIpFallback: false },
 });
 
 export const loginLimiter = rateLimit({
@@ -44,14 +31,10 @@ export const loginLimiter = rateLimit({
   message: 'Too many login attempts, please try again after a minute',
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: createKeyGenerator('email'), // Rate limit per IP + email combination
-  validate: { keyGeneratorIpFallback: false }, // We use custom key, not just IP
+  keyGenerator: createKeyGenerator('email'),
+  validate: { keyGeneratorIpFallback: false },
 });
 
-/**
- * General API rate limiter for authenticated endpoints
- * Uses user ID when available, falls back to IP
- */
 export const apiLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: process.env.NODE_ENV === 'test' ? 1000 : 100,
@@ -59,12 +42,9 @@ export const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: createAuthenticatedKeyGenerator(),
-  validate: { keyGeneratorIpFallback: false }, // We use user ID when available, IP as fallback
+  validate: { keyGeneratorIpFallback: false },
 });
 
-/**
- * Rate limiter for order creation - stricter limit
- */
 export const orderLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: process.env.NODE_ENV === 'test' ? 1000 : 10,
@@ -75,9 +55,6 @@ export const orderLimiter = rateLimit({
   validate: { keyGeneratorIpFallback: false },
 });
 
-/**
- * Rate limiter for review creation - prevent review spam
- */
 export const reviewLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: process.env.NODE_ENV === 'test' ? 1000 : 5,
@@ -88,10 +65,6 @@ export const reviewLimiter = rateLimit({
   validate: { keyGeneratorIpFallback: false },
 });
 
-/**
- * Rate limiter for public GET endpoints (canteens, menus)
- * Uses IP only since these are unauthenticated
- */
 export const publicApiLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: process.env.NODE_ENV === 'test' ? 1000 : 60,
@@ -99,3 +72,4 @@ export const publicApiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+

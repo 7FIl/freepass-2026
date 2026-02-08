@@ -11,20 +11,14 @@ if (!process.env.JWT_SECRET) {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const ACCESS_TOKEN_EXPIRY = '15m'; // Short-lived access token
-const REFRESH_TOKEN_EXPIRY_DAYS = 7; // Long-lived refresh token
+const ACCESS_TOKEN_EXPIRY = '15m';
+const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 export class AuthService {
-  /**
-   * Generate a secure random refresh token
-   */
   private generateRefreshToken(): string {
     return crypto.randomBytes(64).toString('hex');
   }
 
-  /**
-   * Create and store a new refresh token for a user
-   */
   private async createRefreshToken(userId: string): Promise<string> {
     const token = this.generateRefreshToken();
     const expiresAt = new Date();
@@ -41,9 +35,6 @@ export class AuthService {
     return token;
   }
 
-  /**
-   * Generate access token (JWT)
-   */
   private generateAccessToken(user: { id: string; email: string; role: string }): string {
     return jwt.sign(
       {
@@ -59,7 +50,6 @@ export class AuthService {
   async register(data: RegisterInput) {
     const { username, email, password } = data;
 
-    // Validate email domain against database
     const domainAllowed = await isEmailDomainAllowed(email);
     if (!domainAllowed) {
       throw new BadRequestError('Email domain is not allowed. Please use an allowed email provider.');
@@ -117,17 +107,15 @@ export class AuthService {
       throw new BadRequestError('Invalid email or password');
     }
 
-    // Generate short-lived access token
     const accessToken = this.generateAccessToken(user);
     
-    // Generate and store refresh token
     const refreshToken = await this.createRefreshToken(user.id);
 
     return {
-      token: accessToken, // Backward compatibility alias
+      token: accessToken,
       accessToken,
       refreshToken,
-      expiresIn: 900, // 15 minutes in seconds
+      expiresIn: 900,
       user: {
         id: user.id,
         username: user.username,
@@ -144,7 +132,6 @@ export class AuthService {
       throw new BadRequestError('At least one field must be provided for update');
     }
 
-    // Validate email domain if email is being updated
     if (email) {
       const domainAllowed = await isEmailDomainAllowed(email);
       if (!domainAllowed) {
@@ -223,7 +210,6 @@ export class AuthService {
       data: { password: hashedPassword },
     });
 
-    // Revoke all refresh tokens when password is changed
     await prisma.refreshToken.updateMany({
       where: { userId, revoked: false },
       data: { revoked: true },
@@ -232,9 +218,6 @@ export class AuthService {
     return { message: 'Password changed successfully' };
   }
 
-  /**
-   * Refresh access token using a valid refresh token
-   */
   async refreshToken(data: RefreshTokenInput) {
     const { refreshToken } = data;
 
@@ -264,12 +247,11 @@ export class AuthService {
       throw new UnauthorizedError('Refresh token has expired');
     }
 
-    // Generate new access token
     const accessToken = this.generateAccessToken(storedToken.user);
 
     return {
       accessToken,
-      expiresIn: 900, // 15 minutes in seconds
+      expiresIn: 900,
       user: {
         id: storedToken.user.id,
         username: storedToken.user.username,
@@ -279,9 +261,6 @@ export class AuthService {
     };
   }
 
-  /**
-   * Logout - revoke refresh token
-   */
   async logout(refreshToken: string) {
     const result = await prisma.refreshToken.updateMany({
       where: { token: refreshToken, revoked: false },
@@ -295,9 +274,6 @@ export class AuthService {
     return { message: 'Logged out successfully' };
   }
 
-  /**
-   * Revoke all refresh tokens for a user (logout from all devices)
-   */
   async logoutAll(userId: string) {
     await prisma.refreshToken.updateMany({
       where: { userId, revoked: false },
@@ -307,9 +283,6 @@ export class AuthService {
     return { message: 'Logged out from all devices successfully' };
   }
 
-  /**
-   * Cleanup expired refresh tokens (can be called periodically)
-   */
   async cleanupExpiredTokens() {
     const result = await prisma.refreshToken.deleteMany({
       where: {

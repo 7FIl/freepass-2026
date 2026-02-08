@@ -1,8 +1,5 @@
 import { z } from 'zod';
 
-// Note: Email domain validation is now done dynamically via database
-// The schemas below don't include domain validation - it's handled in the service layer
-
 export const createUserSchema = z.object({
   username: z.string().min(3).max(30),
   email: z.string().email('Invalid email format'),

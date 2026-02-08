@@ -9,9 +9,7 @@ import { NotFoundError, ForbiddenError, BadRequestError } from '../types/errors'
 
 export class OrderService {
   async createOrder(userId: string, canteenId: string, data: CreateOrderInput) {
-    // Use interactive transaction with proper isolation level to prevent race conditions
     const order = await prisma.$transaction(async (tx) => {
-      // Check canteen availability first
       const canteen = await tx.canteen.findUnique({
         where: { id: canteenId },
       });
@@ -27,8 +25,6 @@ export class OrderService {
       let totalPrice = 0;
       const menuItems: { id: string; price: number; name: string; stock: number }[] = [];
 
-      // Fetch and validate menu items within the transaction
-      // The Serializable isolation level ensures proper locking
       for (const item of data.items) {
         const menuItem = await tx.menuItem.findUnique({
           where: { id: item.menuItemId },
@@ -55,7 +51,6 @@ export class OrderService {
         });
       }
 
-      // Decrement stock atomically within transaction
       for (const item of data.items) {
         const updatedItem = await tx.menuItem.update({
           where: { id: item.menuItemId },
@@ -66,13 +61,11 @@ export class OrderService {
           },
         });
 
-        // Double-check stock didn't go negative (additional safety check)
         if (updatedItem.stock < 0) {
           throw new BadRequestError(`Race condition detected: Insufficient stock for item ${item.menuItemId}`);
         }
       }
 
-      // Create order with all items
       const newOrder = await tx.order.create({
         data: {
           userId,
@@ -113,9 +106,9 @@ export class OrderService {
 
       return newOrder;
     }, {
-      isolationLevel: 'Serializable', // Highest isolation level to prevent race conditions
-      maxWait: 5000, // Wait up to 5 seconds for transaction lock
-      timeout: 10000, // Transaction timeout after 10 seconds
+      isolationLevel: 'Serializable',
+      maxWait: 5000,
+      timeout: 10000,
     });
 
     return order;
@@ -272,9 +265,7 @@ export class OrderService {
   }
 
   async makePayment(orderId: string, userId: string, data: MakePaymentInput) {
-    // Use transaction with locking to prevent double payment
     const result = await prisma.$transaction(async (tx) => {
-      // Lock the order row for update
       const order = await tx.order.findUnique({
         where: { id: orderId },
       });
@@ -295,7 +286,6 @@ export class OrderService {
         throw new BadRequestError(`Amount mismatch. Expected: ${order.totalPrice}, Received: ${data.amount}`);
       }
 
-      // Create payment record
       const payment = await tx.payment.create({
         data: {
           orderId,
@@ -304,7 +294,6 @@ export class OrderService {
         },
       });
 
-      // Update order payment status
       const updatedOrder = await tx.order.update({
         where: { id: orderId },
         data: {
