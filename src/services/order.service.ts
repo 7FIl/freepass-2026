@@ -22,13 +22,18 @@ export class OrderService {
         throw new BadRequestError('Canteen is currently closed');
       }
 
+      const menuItemIds = data.items.map((item) => item.menuItemId);
+      const menuItemsFromDb = await tx.menuItem.findMany({
+        where: { id: { in: menuItemIds } },
+      });
+
+      const menuItemMap = new Map(menuItemsFromDb.map((m) => [m.id, m]));
+
       let totalPrice = 0;
       const menuItems: { id: string; price: number; name: string; stock: number }[] = [];
 
       for (const item of data.items) {
-        const menuItem = await tx.menuItem.findUnique({
-          where: { id: item.menuItemId },
-        });
+        const menuItem = menuItemMap.get(item.menuItemId);
 
         if (!menuItem) {
           throw new BadRequestError(`Menu item ${item.menuItemId} not found`);
@@ -51,18 +56,21 @@ export class OrderService {
         });
       }
 
-      for (const item of data.items) {
-        const updatedItem = await tx.menuItem.update({
+      const stockUpdates = data.items.map((item) =>
+        tx.menuItem.update({
           where: { id: item.menuItemId },
           data: {
             stock: {
               decrement: item.quantity,
             },
           },
-        });
+        })
+      );
+      const updatedItems = await Promise.all(stockUpdates);
 
+      for (const updatedItem of updatedItems) {
         if (updatedItem.stock < 0) {
-          throw new BadRequestError(`Race condition detected: Insufficient stock for item ${item.menuItemId}`);
+          throw new BadRequestError(`Race condition detected: Insufficient stock for item ${updatedItem.id}`);
         }
       }
 
