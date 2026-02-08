@@ -256,7 +256,7 @@ export class AdminService {
       },
     });
 
-    invalidateAllowedDomainsCache();
+    await invalidateAllowedDomainsCache();
 
     return created;
   }
@@ -274,7 +274,7 @@ export class AdminService {
       where: { id: domainId },
     });
 
-    invalidateAllowedDomainsCache();
+    await invalidateAllowedDomainsCache();
 
     return { message: 'Domain deleted successfully' };
   }

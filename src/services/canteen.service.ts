@@ -26,7 +26,7 @@ export class CanteenService {
       },
     });
 
-    cache.del(CACHE_KEYS.CANTEENS_LIST);
+    await cache.del(CACHE_KEYS.CANTEENS_LIST);
 
     return canteen;
   }
@@ -109,7 +109,7 @@ export class CanteenService {
       },
     });
 
-    cache.del([CACHE_KEYS.CANTEENS_LIST, CACHE_KEYS.CANTEEN_BY_ID(canteenId)]);
+    await cache.del([CACHE_KEYS.CANTEENS_LIST, CACHE_KEYS.CANTEEN_BY_ID(canteenId)]);
 
     return updatedCanteen;
   }
@@ -135,7 +135,7 @@ export class CanteenService {
       },
     });
 
-    cache.del([
+    await cache.del([
       CACHE_KEYS.MENU_ITEMS(canteenId),
       CACHE_KEYS.CANTEEN_BY_ID(canteenId),
       CACHE_KEYS.CANTEENS_LIST,
@@ -198,7 +198,7 @@ export class CanteenService {
       data,
     });
 
-    cache.del([
+    await cache.del([
       CACHE_KEYS.MENU_ITEMS(canteenId),
       CACHE_KEYS.CANTEEN_BY_ID(canteenId),
       CACHE_KEYS.CANTEENS_LIST,
@@ -233,7 +233,7 @@ export class CanteenService {
       where: { id: menuItemId },
     });
 
-    cache.del([
+    await cache.del([
       CACHE_KEYS.MENU_ITEMS(canteenId),
       CACHE_KEYS.CANTEEN_BY_ID(canteenId),
       CACHE_KEYS.CANTEENS_LIST,

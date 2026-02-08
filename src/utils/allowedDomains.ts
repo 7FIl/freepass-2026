@@ -24,7 +24,7 @@ export async function isEmailDomainAllowed(email: string): Promise<boolean> {
   return allowedDomains.includes(domain);
 }
 
-export function invalidateAllowedDomainsCache(): void {
-  cache.del(CACHE_KEY);
+export async function invalidateAllowedDomainsCache(): Promise<void> {
+  await cache.del(CACHE_KEY);
 }
 

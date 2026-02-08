@@ -1,53 +1,128 @@
-import NodeCache from 'node-cache';
+import Redis from 'ioredis';
+import logger from './logger';
+
+const isTest = process.env.NODE_ENV === 'test';
 
 class CacheService {
-  private cache: NodeCache;
+  private redis: Redis | null = null;
+  private memoryCache: Map<string, { value: string; expiry: number }> = new Map();
+  private defaultTTL = 300;
 
   constructor() {
-    this.cache = new NodeCache({
-      stdTTL: 300,
-      checkperiod: 60,
-      useClones: true,
-    });
-  }
+    if (!isTest && process.env.REDIS_URL) {
+      this.redis = new Redis(process.env.REDIS_URL, {
+        maxRetriesPerRequest: 3,
+        retryStrategy: (times) => {
+          if (times > 3) {
+            logger.warn('Redis connection failed, falling back to memory cache');
+            return null;
+          }
+          return Math.min(times * 100, 3000);
+        },
+      });
 
-  get<T>(key: string): T | undefined {
-    return this.cache.get<T>(key);
-  }
+      this.redis.on('error', (err) => {
+        logger.error({ err }, 'Redis connection error');
+      });
 
-  set<T>(key: string, value: T, ttl?: number): boolean {
-    if (ttl !== undefined) {
-      return this.cache.set(key, value, ttl);
+      this.redis.on('connect', () => {
+        logger.info('Redis connected');
+      });
     }
-    return this.cache.set(key, value);
   }
 
-  del(key: string | string[]): number {
-    return this.cache.del(key);
+  private isRedisAvailable(): boolean {
+    return this.redis !== null && this.redis.status === 'ready';
   }
 
-  delByPrefix(prefix: string): number {
-    const keys = this.cache.keys().filter(key => key.startsWith(prefix));
-    return this.cache.del(keys);
+  async get<T>(key: string): Promise<T | undefined> {
+    if (this.isRedisAvailable()) {
+      const value = await this.redis!.get(key);
+      if (value) {
+        return JSON.parse(value) as T;
+      }
+      return undefined;
+    }
+
+    const cached = this.memoryCache.get(key);
+    if (cached && cached.expiry > Date.now()) {
+      return JSON.parse(cached.value) as T;
+    }
+    this.memoryCache.delete(key);
+    return undefined;
   }
 
-  flush(): void {
-    this.cache.flushAll();
+  async set<T>(key: string, value: T, ttl?: number): Promise<boolean> {
+    const ttlSeconds = ttl ?? this.defaultTTL;
+    const serialized = JSON.stringify(value);
+
+    if (this.isRedisAvailable()) {
+      await this.redis!.setex(key, ttlSeconds, serialized);
+      return true;
+    }
+
+    this.memoryCache.set(key, {
+      value: serialized,
+      expiry: Date.now() + ttlSeconds * 1000,
+    });
+    return true;
+  }
+
+  async del(key: string | string[]): Promise<number> {
+    const keys = Array.isArray(key) ? key : [key];
+    
+    if (this.isRedisAvailable()) {
+      if (keys.length === 0) return 0;
+      return await this.redis!.del(...keys);
+    }
+
+    let count = 0;
+    for (const k of keys) {
+      if (this.memoryCache.delete(k)) count++;
+    }
+    return count;
+  }
+
+  async delByPrefix(prefix: string): Promise<number> {
+    if (this.isRedisAvailable()) {
+      const keys = await this.redis!.keys(`${prefix}*`);
+      if (keys.length === 0) return 0;
+      return await this.redis!.del(...keys);
+    }
+
+    let count = 0;
+    for (const key of this.memoryCache.keys()) {
+      if (key.startsWith(prefix)) {
+        this.memoryCache.delete(key);
+        count++;
+      }
+    }
+    return count;
+  }
+
+  async flush(): Promise<void> {
+    if (this.isRedisAvailable()) {
+      await this.redis!.flushdb();
+      return;
+    }
+    this.memoryCache.clear();
   }
 
   async getOrSet<T>(key: string, factory: () => Promise<T>, ttl?: number): Promise<T> {
-    const cached = this.get<T>(key);
+    const cached = await this.get<T>(key);
     if (cached !== undefined) {
       return cached;
     }
 
     const value = await factory();
-    this.set(key, value, ttl);
+    await this.set(key, value, ttl);
     return value;
   }
 
-  getStats() {
-    return this.cache.getStats();
+  async disconnect(): Promise<void> {
+    if (this.redis) {
+      await this.redis.quit();
+    }
   }
 }
 
