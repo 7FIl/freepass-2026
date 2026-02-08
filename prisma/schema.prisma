@@ -33,13 +33,14 @@ enum PaymentStatus {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  username  String   @unique
-  email     String   @unique
+  id        String    @id @default(uuid())
+  username  String    @unique
+  email     String    @unique
   password  String
-  role      UserRole @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      UserRole  @default(USER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   canteens      Canteen[]
   orders        Order[]
@@ -48,6 +49,7 @@ model User {
 
   @@index([role])
   @@index([createdAt])
+  @@index([deletedAt])
   @@map("users")
 }
 
@@ -91,8 +93,8 @@ model MenuItem {
 
 model Order {
   id            String        @id @default(uuid())
-  userId        String
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
   canteenId     String
   canteen       Canteen       @relation(fields: [canteenId], references: [id], onDelete: Cascade)
   totalPrice    Decimal       @db.Decimal(10, 2)
@@ -153,8 +155,8 @@ model Review {
   id        String   @id @default(uuid())
   orderId   String   @unique
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   rating    Int
   comment   String
   createdAt DateTime @default(now())

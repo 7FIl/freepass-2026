@@ -58,6 +58,7 @@ export class AuthService {
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ email }, { username }],
+        deletedAt: null,
       },
     });
 
@@ -94,7 +95,7 @@ export class AuthService {
     const { email, password } = data;
 
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email, deletedAt: null },
     });
 
     if (!user) {
@@ -143,6 +144,7 @@ export class AuthService {
         where: {
           AND: [
             { id: { not: userId } },
+            { deletedAt: null },
             {
               OR: [
                 email ? { email } : {},
@@ -185,7 +187,7 @@ export class AuthService {
     const { currentPassword, newPassword } = data;
 
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: userId, deletedAt: null },
     });
 
     if (!user) {

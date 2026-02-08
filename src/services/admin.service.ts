@@ -14,6 +14,7 @@ export class AdminService {
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ email: data.email }, { username: data.username }],
+        deletedAt: null,
       },
     });
 
@@ -51,6 +52,7 @@ export class AdminService {
     const skip = (page - 1) * limit;
 
     const users = await prisma.user.findMany({
+      where: { deletedAt: null },
       select: {
         id: true,
         username: true,
@@ -63,7 +65,7 @@ export class AdminService {
       orderBy: { createdAt: 'desc' },
     });
 
-    const total = await prisma.user.count();
+    const total = await prisma.user.count({ where: { deletedAt: null } });
     const totalPages = Math.ceil(total / limit);
 
     return {
@@ -79,7 +81,7 @@ export class AdminService {
 
   async getUserById(userId: string) {
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: userId, deletedAt: null },
       select: {
         id: true,
         username: true,
@@ -98,7 +100,7 @@ export class AdminService {
 
   async updateUser(userId: string, data: UpdateUserInput) {
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: userId, deletedAt: null },
     });
 
     if (!user) {
@@ -112,7 +114,7 @@ export class AdminService {
       }
 
       const existingEmail = await prisma.user.findUnique({
-        where: { email: data.email },
+        where: { email: data.email, deletedAt: null },
       });
       if (existingEmail) {
         throw new BadRequestError('Email already in use');
@@ -121,7 +123,7 @@ export class AdminService {
 
     if (data.username && data.username !== user.username) {
       const existingUsername = await prisma.user.findUnique({
-        where: { username: data.username },
+        where: { username: data.username, deletedAt: null },
       });
       if (existingUsername) {
         throw new BadRequestError('Username already in use');
@@ -149,21 +151,33 @@ export class AdminService {
 
   async deleteUser(userId: string) {
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: userId, deletedAt: null },
     });
 
     if (!user) {
       throw new NotFoundError('User not found');
     }
 
-    if (user.role === 'CANTEEN_OWNER') {
-      await prisma.canteen.deleteMany({
-        where: { ownerId: userId },
+    await prisma.$transaction(async (tx) => {
+      // Soft delete the user
+      await tx.user.update({
+        where: { id: userId },
+        data: { deletedAt: new Date() },
       });
-    }
 
-    await prisma.user.delete({
-      where: { id: userId },
+      // Revoke all refresh tokens
+      await tx.refreshToken.updateMany({
+        where: { userId },
+        data: { revoked: true },
+      });
+
+      // If canteen owner, close all their canteens
+      if (user.role === 'CANTEEN_OWNER') {
+        await tx.canteen.updateMany({
+          where: { ownerId: userId },
+          data: { isOpen: false },
+        });
+      }
     });
 
     return { message: 'User deleted successfully' };
@@ -173,7 +187,7 @@ export class AdminService {
     const skip = (page - 1) * limit;
 
     const owners = await prisma.user.findMany({
-      where: { role: 'CANTEEN_OWNER' },
+      where: { role: 'CANTEEN_OWNER', deletedAt: null },
       select: {
         id: true,
         username: true,
@@ -193,7 +207,7 @@ export class AdminService {
     });
 
     const total = await prisma.user.count({
-      where: { role: 'CANTEEN_OWNER' },
+      where: { role: 'CANTEEN_OWNER', deletedAt: null },
     });
     const totalPages = Math.ceil(total / limit);
 
