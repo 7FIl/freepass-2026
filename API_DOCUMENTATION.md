@@ -472,13 +472,16 @@ Authorization: Bearer <canteen_owner_token>
 ```json
 {
   "name": "Updated Canteen Name",
-  "location": "New Location",
-  "contactInfo": "+9876543210",
-  "isOpen": true
+  "isOpen": false
 }
 ```
 
-**Note:** All fields are optional.
+**Note:** All fields are optional. You can update the canteen name, status (isOpen), or both.
+
+**Examples:**
+- Update name only: `{ "name": "New Name" }`
+- Update status only: `{ "isOpen": false }` (close canteen)
+- Update both: `{ "name": "New Name", "isOpen": true }`
 
 **Response (200):**
 ```json
@@ -488,9 +491,7 @@ Authorization: Bearer <canteen_owner_token>
   "data": {
     "id": "uuid",
     "name": "Updated Canteen Name",
-    "location": "New Location",
-    "contactInfo": "+9876543210",
-    "isOpen": true,
+    "isOpen": false,
     "updatedAt": "2026-02-05T10:00:00.000Z"
   }
 }
@@ -498,32 +499,7 @@ Authorization: Bearer <canteen_owner_token>
 
 ---
 
-### 5. Toggle Canteen Status
-Toggle isOpen status (Owner only).
-
-**Endpoint:** `POST /canteens/:canteenId/toggle-status`
-
-**Headers:**
-```
-Authorization: Bearer <canteen_owner_token>
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "message": "Canteen status updated successfully",
-  "data": {
-    "id": "uuid",
-    "name": "Campus Canteen",
-    "isOpen": true
-  }
-}
-```
-
----
-
-### 6. Create Menu Item
+### 5. Create Menu Item
 Add a new menu item to canteen (Owner only).
 
 **Endpoint:** `POST /canteens/:canteenId/menu`
@@ -573,7 +549,7 @@ Authorization: Bearer <canteen_owner_token>
 
 ---
 
-### 7. Get Menu Items
+### 6. Get Menu Items
 Get all menu items for a canteen (Public).
 
 **Endpoint:** `GET /canteens/:canteenId/menu`
@@ -607,7 +583,7 @@ Get all menu items for a canteen (Public).
 
 ---
 
-### 8. Update Menu Item
+### 7. Update Menu Item
 Update menu item details (Owner only).
 
 **Endpoint:** `PUT /canteens/:canteenId/menu/:menuItemId`
@@ -645,7 +621,7 @@ Authorization: Bearer <canteen_owner_token>
 
 ---
 
-### 9. Delete Menu Item
+### 8. Delete Menu Item
 Delete a menu item (Owner only).
 
 **Endpoint:** `DELETE /canteens/:canteenId/menu/:menuItemId`

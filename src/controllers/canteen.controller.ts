@@ -158,55 +158,6 @@ export class CanteenController {
     }
   }
 
-  async toggleCanteenStatus(req: Request, res: Response) {
-    try {
-      const { canteenId } = req.params;
-
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Unauthorized',
-        });
-      }
-
-      const updatedCanteen = await canteenService.toggleCanteenStatus(
-        canteenId as string,
-        req.user.userId,
-        req.user.role,
-      );
-
-      return res.status(200).json({
-        success: true,
-        message: 'Canteen status toggled successfully',
-        data: updatedCanteen,
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message.includes('not found')) {
-          return res.status(404).json({
-            success: false,
-            message: error.message,
-          });
-        }
-        if (error.message.includes('Unauthorized')) {
-          return res.status(403).json({
-            success: false,
-            message: error.message,
-          });
-        }
-        return res.status(400).json({
-          success: false,
-          message: error.message,
-        });
-      }
-
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-      });
-    }
-  }
-
   async createMenuItem(req: Request, res: Response) {
     try {
       const { canteenId } = req.params;

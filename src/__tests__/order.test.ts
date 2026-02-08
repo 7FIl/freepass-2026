@@ -232,8 +232,9 @@ describe('Order API - Edge Cases', () => {
     it('should reject order when canteen is closed', async () => {
       // Close the canteen
       await request(app)
-        .post(`/api/canteens/${canteenId}/toggle-status`)
-        .set('Authorization', `Bearer ${ownerToken}`);
+        .put(`/api/canteens/${canteenId}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ isOpen: false });
 
       const res = await request(app)
         .post(`/api/orders/${canteenId}`)
@@ -252,8 +253,9 @@ describe('Order API - Edge Cases', () => {
 
       // Reopen canteen
       await request(app)
-        .post(`/api/canteens/${canteenId}/toggle-status`)
-        .set('Authorization', `Bearer ${ownerToken}`);
+        .put(`/api/canteens/${canteenId}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ isOpen: true });
     });
   });
 

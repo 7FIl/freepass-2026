@@ -246,36 +246,40 @@ describe('Canteen API - Edge Cases', () => {
     });
   });
 
-  describe('POST /api/canteens/:canteenId/toggle-status - Toggle Status', () => {
-    it('should toggle canteen status from open to closed', async () => {
+  describe('PUT /api/canteens/:canteenId - Update Canteen Status', () => {
+    it('should update canteen status to closed', async () => {
       const res = await request(app)
-        .post(`/api/canteens/${canteenId}/toggle-status`)
-        .set('Authorization', `Bearer ${ownerToken}`);
+        .put(`/api/canteens/${canteenId}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ isOpen: false });
 
       expect(res.status).toBe(200);
       expect(res.body.data.isOpen).toBe(false);
     });
 
-    it('should toggle canteen status from closed to open', async () => {
+    it('should update canteen status to open', async () => {
       const res = await request(app)
-        .post(`/api/canteens/${canteenId}/toggle-status`)
-        .set('Authorization', `Bearer ${ownerToken}`);
+        .put(`/api/canteens/${canteenId}`)
+        .set('Authorization', `Bearer ${ownerToken}`)
+        .send({ isOpen: true });
 
       expect(res.status).toBe(200);
       expect(res.body.data.isOpen).toBe(true);
     });
 
-    it('should reject toggle by non-owner', async () => {
+    it('should reject status update by non-owner', async () => {
       const res = await request(app)
-        .post(`/api/canteens/${canteenId}/toggle-status`)
-        .set('Authorization', `Bearer ${userToken}`);
+        .put(`/api/canteens/${canteenId}`)
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({ isOpen: false });
 
       expect(res.status).toBe(403);
     });
 
-    it('should reject toggle without auth', async () => {
+    it('should reject status update without auth', async () => {
       const res = await request(app)
-        .post(`/api/canteens/${canteenId}/toggle-status`);
+        .put(`/api/canteens/${canteenId}`)
+        .send({ isOpen: false });
 
       expect(res.status).toBe(401);
     });
