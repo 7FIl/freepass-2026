@@ -34,7 +34,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    command: sh -c "npx prisma migrate deploy && npx ts-node scripts/seed-admin.ts && npm start"
+    command: sh -c "npx prisma migrate deploy && node dist/scripts/seed-admin.js && npm start"
 
 volumes:
   postgres_data:

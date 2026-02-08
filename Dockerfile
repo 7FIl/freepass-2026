@@ -15,7 +15,7 @@ COPY . .
 # Generate Prisma Client
 RUN npx prisma generate
 
-# Build TypeScript
+# Build TypeScript (includes seed scripts)
 RUN npm run build
 
 # Remove dev dependencies
