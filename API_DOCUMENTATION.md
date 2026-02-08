@@ -88,7 +88,6 @@ Authenticate and receive access and refresh tokens.
 - `accessToken`: JWT valid for 15 minutes
 - `refreshToken`: Token valid for 7 days, used to obtain new access tokens
 - `expiresIn`: Access token expiry in seconds
-- Legacy `token` field is also returned for backward compatibility
 ```
 
 ---
@@ -396,7 +395,7 @@ Authorization: Bearer <admin_token>
 ---
 
 ### 5. Delete User
-Delete a user account.
+Soft delete a user account. The user's order history and reviews are preserved for audit purposes.
 
 **Endpoint:** `DELETE /admin/users/:userId`
 
@@ -412,6 +411,14 @@ Authorization: Bearer <admin_token>
   "message": "User deleted successfully"
 }
 ```
+
+**Notes:**
+- This performs a **soft delete** - the user's account is marked as deleted but not removed from the database
+- The user's order history remains visible to canteen owners
+- Reviews by the deleted user are preserved (with `userId` set to null)
+- Deleted user's refresh tokens are revoked immediately
+- If the user was a canteen owner, their canteens are closed (isOpen: false)
+- Deleted users cannot log in or authenticate
 
 ---
 
@@ -728,7 +735,7 @@ Authorization: Bearer <canteen_owner_token>
     "id": "uuid",
     "name": "Burger",
     "description": "Beef burger with cheese",
-    "price": 5.99,
+    "price": "5.99",
     "category": "Main Course",
     "isAvailable": true,
     "imageUrl": "https://example.com/burger.jpg",
@@ -737,6 +744,8 @@ Authorization: Bearer <canteen_owner_token>
   }
 }
 ```
+
+**Note:** The `price` field is returned as a string to preserve decimal precision.
 
 ---
 
@@ -761,7 +770,7 @@ Get all menu items for a canteen (Public).
       "id": "uuid",
       "name": "Burger",
       "description": "Beef burger with cheese",
-      "price": 5.99,
+      "price": "5.99",
       "category": "Main Course",
       "isAvailable": true,
       "imageUrl": "https://example.com/burger.jpg",
@@ -771,6 +780,8 @@ Get all menu items for a canteen (Public).
   ]
 }
 ```
+
+**Note:** The `price` field is returned as a string to preserve decimal precision.
 
 ---
 
@@ -876,15 +887,15 @@ Authorization: Bearer <token>
     "id": "uuid",
     "userId": "uuid",
     "canteenId": "uuid",
-    "totalAmount": 18.97,
-    "status": "PENDING",
-    "notes": "No onions please",
+    "totalPrice": "18.97",
+    "status": "WAITING",
+    "paymentStatus": "UNPAID",
     "items": [
       {
         "id": "uuid",
         "menuItemId": "uuid",
         "quantity": 2,
-        "price": 5.99,
+        "price": "11.98",
         "menuItem": {
           "name": "Burger"
         }
@@ -894,6 +905,10 @@ Authorization: Bearer <token>
   }
 }
 ```
+
+**Notes:**
+- `totalPrice` and `price` fields are returned as strings to preserve decimal precision
+- Stock is automatically decremented when order is created
 
 ---
 
@@ -929,7 +944,7 @@ Authorization: Bearer <token>
       "id": "uuid",
       "userId": "uuid",
       "canteenId": "uuid",
-      "totalPrice": 18.97,
+      "totalPrice": "18.97",
       "status": "WAITING",
       "paymentStatus": "PAID",
       "createdAt": "2026-02-05T10:00:00.000Z",
@@ -942,19 +957,20 @@ Authorization: Bearer <token>
           "id": "uuid",
           "menuItemId": "uuid",
           "quantity": 2,
-          "price": 11.98,
+          "price": "11.98",
           "menuItem": {
             "id": "uuid",
             "name": "Burger",
-            "price": 5.99
+            "price": "5.99"
           }
         }
       ],
       "payments": [
         {
           "id": "uuid",
-          "amount": 18.97,
-          "status": "PAID"
+          "amount": "18.97",
+          "status": "PAID",
+          "createdAt": "2026-02-05T10:00:00.000Z"
         }
       ],
       "review": null
@@ -970,6 +986,11 @@ Authorization: Bearer <token>
   }
 }
 ```
+
+**Notes:**
+- `totalPrice`, `price`, and `amount` fields are returned as strings to preserve decimal precision
+- `payments` is an array (1:N relationship) to support audit trails for failed/retried payments
+- `userId` may be `null` if the user account was deleted (soft delete)
 
 ---
 
@@ -995,9 +1016,9 @@ Authorization: Bearer <canteen_owner_token>
     {
       "id": "uuid",
       "userId": "uuid",
-      "totalAmount": 18.97,
-      "status": "PENDING",
-      "notes": "No onions please",
+      "totalPrice": "18.97",
+      "status": "WAITING",
+      "paymentStatus": "UNPAID",
       "createdAt": "2026-02-05T10:00:00.000Z",
       "user": {
         "username": "johndoe",
@@ -1007,7 +1028,7 @@ Authorization: Bearer <canteen_owner_token>
         {
           "menuItemId": "uuid",
           "quantity": 2,
-          "price": 5.99,
+          "price": "11.98",
           "menuItem": {
             "name": "Burger"
           }
@@ -1017,6 +1038,8 @@ Authorization: Bearer <canteen_owner_token>
   ]
 }
 ```
+
+**Note:** `userId` may be `null` if the user account was deleted (soft delete).
 
 ---
 
@@ -1035,15 +1058,16 @@ Authorization: Bearer <token>
 **Request Body:**
 ```json
 {
-  "status": "PREPARING"
+  "status": "COOKING"
 }
 ```
 
 **Important:** The order payment must be completed (`paymentStatus: PAID`) before the canteen owner can update the order status. This ensures customers pay before food preparation begins.
 
+**Allowed Status Values:** `WAITING`, `COOKING`, `READY`, `COMPLETED`
+
 **Allowed Status Transitions:**
-- User can: `PENDING` → `CANCELLED`
-- Owner can (after payment): `PENDING` → `PREPARING` → `READY` → `COMPLETED`
+- Owner can (after payment): `WAITING` → `COOKING` → `READY` → `COMPLETED`
 
 **Response (200):**
 ```json
@@ -1052,7 +1076,7 @@ Authorization: Bearer <token>
   "message": "Order status updated successfully",
   "data": {
     "id": "uuid",
-    "status": "PREPARING",
+    "status": "COOKING",
     "updatedAt": "2026-02-05T10:00:00.000Z"
   }
 }
@@ -1073,35 +1097,38 @@ Authorization: Bearer <token>
 **Request Body:**
 ```json
 {
-  "amount": 18.97,
-  "paymentMethod": "CASH",
-  "transactionId": "TXN123456"
+  "amount": 18.97
 }
 ```
 
-**Payment Methods:** `CASH`, `CARD`, `DIGITAL_WALLET`
-
 **Validation Rules:**
-- `amount`: Must match order total amount
-- `paymentMethod`: Required
-- `transactionId`: Optional for CASH, required for others
+- `amount`: Must **exactly match** order total price (no tolerance for floating point errors)
 
-**Response (201):**
+**Response (200):**
 ```json
 {
   "success": true,
   "message": "Payment processed successfully",
   "data": {
-    "id": "uuid",
-    "orderId": "uuid",
-    "amount": 18.97,
-    "paymentMethod": "CASH",
-    "transactionId": "TXN123456",
-    "status": "COMPLETED",
-    "createdAt": "2026-02-05T10:00:00.000Z"
+    "order": {
+      "id": "uuid",
+      "paymentStatus": "PAID"
+    },
+    "payment": {
+      "id": "uuid",
+      "orderId": "uuid",
+      "amount": "18.97",
+      "status": "PAID",
+      "createdAt": "2026-02-05T10:00:00.000Z"
+    }
   }
 }
 ```
+
+**Notes:**
+- `amount` field in response is a string to preserve decimal precision
+- Failed payment attempts are recorded with status `FAILED` for audit purposes
+- Uses atomic database operations to prevent race conditions (double-payment)
 
 ---
 
@@ -1298,13 +1325,21 @@ Most endpoints require authentication using JWT (JSON Web Token).
 - Application will throw an error on startup if JWT_SECRET is missing
 
 **How to authenticate:**
-1. Login using `/auth/login` to get a token
-2. Include the token in the Authorization header for protected routes:
+1. Login using `/auth/login` to get tokens
+2. Include the access token in the Authorization header for protected routes:
    ```
-   Authorization: Bearer <your_jwt_token>
+   Authorization: Bearer <your_jwt_access_token>
    ```
+3. When access token expires, use `/auth/refresh` with your refresh token to get a new access token
 
-**Token expiration:** 24 hours
+**Token Expiration:**
+- Access Token: 15 minutes
+- Refresh Token: 7 days
+
+**Soft-Deleted Users:**
+- Users who have been deleted by an admin cannot authenticate
+- Existing tokens for deleted users will be rejected
+- All refresh tokens are revoked upon user deletion
 
 ---
 
@@ -1326,3 +1361,31 @@ The following email domains are allowed for registration:
 - yandex.ru
 - mail.ru
 - proton.me, protonmail.com
+
+---
+
+## Infrastructure
+
+### Caching
+The API uses Redis for caching with an in-memory fallback for development/testing:
+- **Production**: Redis (set `REDIS_URL` environment variable)
+- **Development/Testing**: In-memory Map (automatic fallback when Redis unavailable)
+- Cache is used for allowed email domains lookup
+
+### Logging
+Uses Pino for high-performance JSON logging:
+- **Production**: `info` level
+- **Development**: `debug` level
+- **Testing**: Silent (disabled)
+- Request logging via `pino-http` middleware
+
+### Database
+- PostgreSQL with Prisma ORM
+- Decimal types for all monetary fields (10,2 precision)
+- Atomic operations for race condition prevention
+- Soft delete for users (preserves order history)
+
+### Docker
+Multi-stage build for optimized production images:
+- Builder stage: Compiles TypeScript, generates Prisma client
+- Production stage: Minimal Node.js alpine image with only production dependencies
