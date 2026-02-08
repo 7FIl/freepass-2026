@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../types/errors';
 import { Prisma } from '@prisma/client';
 import { ZodError } from 'zod';
+import logger from '../utils/logger';
 
 export const errorHandler = (
   err: Error,
@@ -58,10 +59,8 @@ export const errorHandler = (
     });
   }
 
-  // Log unexpected errors
-  console.error('Unexpected error:', err);
+  logger.error({ err, stack: err.stack }, 'Unexpected error');
 
-  // Default error response
   return res.status(500).json({
     success: false,
     message: process.env.NODE_ENV === 'production' 
