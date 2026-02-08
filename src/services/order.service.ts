@@ -1,4 +1,5 @@
 import prisma from '../utils/prisma';
+import { Prisma } from '@prisma/client';
 import {
   CreateOrderInput,
   UpdateOrderStatusInput,
@@ -29,8 +30,8 @@ export class OrderService {
 
       const menuItemMap = new Map(menuItemsFromDb.map((m) => [m.id, m]));
 
-      let totalPrice = 0;
-      const menuItems: { id: string; price: number; name: string; stock: number }[] = [];
+      let totalPrice = new Prisma.Decimal(0);
+      const menuItems: { id: string; price: Prisma.Decimal; name: string; stock: number }[] = [];
 
       for (const item of data.items) {
         const menuItem = menuItemMap.get(item.menuItemId);
@@ -47,11 +48,10 @@ export class OrderService {
           throw new BadRequestError(`Insufficient stock for ${menuItem.name}. Available: ${menuItem.stock}`);
         }
 
-        const priceAsNumber = Number(menuItem.price);
-        totalPrice += priceAsNumber * item.quantity;
+        totalPrice = totalPrice.add(menuItem.price.mul(item.quantity));
         menuItems.push({
           id: menuItem.id,
-          price: priceAsNumber,
+          price: menuItem.price,
           name: menuItem.name,
           stock: menuItem.stock,
         });
@@ -84,7 +84,7 @@ export class OrderService {
               return {
                 menuItemId: item.menuItemId,
                 quantity: item.quantity,
-                price: menuItem.price * item.quantity,
+                price: menuItem.price.mul(item.quantity),
               };
             }),
           },
@@ -284,9 +284,9 @@ export class OrderService {
       throw new BadRequestError('Order has already been paid');
     }
 
-    const orderTotalPrice = Number(order.totalPrice);
-    if (Math.abs(data.amount - orderTotalPrice) > 0.01) {
-      throw new BadRequestError(`Amount mismatch. Expected: ${orderTotalPrice}, Received: ${data.amount}`);
+    const amountDecimal = new Prisma.Decimal(data.amount);
+    if (!amountDecimal.eq(order.totalPrice)) {
+      throw new BadRequestError(`Amount mismatch. Expected: ${order.totalPrice.toString()}, Received: ${data.amount}`);
     }
 
     const result = await prisma.$transaction(async (tx) => {
