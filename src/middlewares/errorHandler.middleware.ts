@@ -47,10 +47,14 @@ export const errorHandler = (
   // Check for Zod errors by looking for 'issues' property
   if ('issues' in err || err.name === 'ZodError' || err instanceof ZodError) {
     const zodErr = err as any;
+    const issues = zodErr.issues || zodErr.errors || [];
     return res.status(400).json({
       success: false,
       message: 'Validation error',
-      errors: zodErr.issues || zodErr.errors || [],
+      errors: issues.map((issue: any) => ({
+        field: issue.path.join('.'),
+        message: issue.message,
+      })),
     });
   }
 

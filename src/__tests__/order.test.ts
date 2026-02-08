@@ -4,12 +4,14 @@ import orderRoutes from '../routes/order.routes';
 import canteenRoutes from '../routes/canteen.routes';
 import authRoutes from '../routes/auth.routes';
 import prisma from '../utils/prisma';
+import { errorHandler } from '../middlewares/errorHandler.middleware';
 
 const app = express();
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/canteens', canteenRoutes);
 app.use('/api/orders', orderRoutes);
+app.use(errorHandler);
 
 describe('Order API - Edge Cases', () => {
   let ownerToken: string;

@@ -3,11 +3,13 @@ import express from 'express';
 import adminRoutes from '../routes/admin.routes';
 import authRoutes from '../routes/auth.routes';
 import prisma from '../utils/prisma';
+import { errorHandler } from '../middlewares/errorHandler.middleware';
 
 const app = express();
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use(errorHandler);
 
 describe('Admin API - Edge Cases', () => {
   let adminToken: string;
