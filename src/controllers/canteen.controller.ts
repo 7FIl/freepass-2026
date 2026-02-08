@@ -1,5 +1,4 @@
 import { Request, Response } from 'express';
-import { ZodError } from 'zod';
 import canteenService from '../services/canteen.service';
 import {
   createCanteenSchema,
@@ -7,331 +6,144 @@ import {
   createMenuItemSchema,
   updateMenuItemSchema,
 } from '../validations/canteen.validation';
+import { asyncHandler } from '../utils/asyncHandler';
+import { ForbiddenError, UnauthorizedError } from '../types/errors';
 
 export class CanteenController {
-  async createCanteen(req: Request, res: Response) {
-    try {
-      const validatedData = createCanteenSchema.parse(req.body);
+  createCanteen = asyncHandler(async (req: Request, res: Response) => {
+    const validatedData = createCanteenSchema.parse(req.body);
 
-      if (req.user?.role !== 'CANTEEN_OWNER' && req.user?.role !== 'ADMIN') {
-        return res.status(403).json({
-          success: false,
-          message: 'Forbidden: Only canteen owners and admins can create canteens',
-        });
-      }
-
-      const canteen = await canteenService.createCanteen(req.user.userId, validatedData);
-
-      return res.status(201).json({
-        success: true,
-        message: 'Canteen created successfully',
-        data: canteen,
-      });
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation error',
-          errors: error.issues.map((err) => ({
-            field: err.path.join('.'),
-            message: err.message,
-          })),
-        });
-      }
-
-      if (error instanceof Error) {
-        return res.status(400).json({
-          success: false,
-          message: error.message,
-        });
-      }
-
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-      });
+    if (req.user?.role !== 'CANTEEN_OWNER' && req.user?.role !== 'ADMIN') {
+      throw new ForbiddenError('Forbidden: Only canteen owners and admins can create canteens');
     }
-  }
 
-  async getCanteens(_req: Request, res: Response) {
-    try {
-      const canteens = await canteenService.getCanteens();
+    const canteen = await canteenService.createCanteen(req.user.userId, validatedData);
 
-      return res.status(200).json({
-        success: true,
-        message: 'Canteens retrieved successfully',
-        data: canteens,
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        return res.status(400).json({
-          success: false,
-          message: error.message,
-        });
-      }
+    return res.status(201).json({
+      success: true,
+      message: 'Canteen created successfully',
+      data: canteen,
+    });
+  });
 
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-      });
+  getCanteens = asyncHandler(async (_req: Request, res: Response) => {
+    const canteens = await canteenService.getCanteens();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Canteens retrieved successfully',
+      data: canteens,
+    });
+  });
+
+  getCanteenById = asyncHandler(async (req: Request, res: Response) => {
+    const { canteenId } = req.params;
+    const canteen = await canteenService.getCanteenById(canteenId as string);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Canteen retrieved successfully',
+      data: canteen,
+    });
+  });
+
+  updateCanteen = asyncHandler(async (req: Request, res: Response) => {
+    const { canteenId } = req.params;
+    const validatedData = updateCanteenSchema.parse(req.body);
+
+    if (!req.user) {
+      throw new UnauthorizedError();
     }
-  }
 
-  async getCanteenById(req: Request, res: Response) {
-    try {
-      const { canteenId } = req.params;
-      const canteen = await canteenService.getCanteenById(canteenId as string);
+    const updatedCanteen = await canteenService.updateCanteen(
+      canteenId as string,
+      req.user.userId,
+      req.user.role,
+      validatedData,
+    );
 
-      return res.status(200).json({
-        success: true,
-        message: 'Canteen retrieved successfully',
-        data: canteen,
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        return res.status(404).json({
-          success: false,
-          message: error.message,
-        });
-      }
+    return res.status(200).json({
+      success: true,
+      message: 'Canteen updated successfully',
+      data: updatedCanteen,
+    });
+  });
 
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-      });
+  createMenuItem = asyncHandler(async (req: Request, res: Response) => {
+    const { canteenId } = req.params;
+    const validatedData = createMenuItemSchema.parse(req.body);
+
+    if (!req.user) {
+      throw new UnauthorizedError();
     }
-  }
 
-  async updateCanteen(req: Request, res: Response) {
-    try {
-      const { canteenId } = req.params;
-      const validatedData = updateCanteenSchema.parse(req.body);
+    const menuItem = await canteenService.createMenuItem(
+      canteenId as string,
+      req.user.userId,
+      req.user.role,
+      validatedData,
+    );
 
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Unauthorized',
-        });
-      }
+    return res.status(201).json({
+      success: true,
+      message: 'Menu item created successfully',
+      data: menuItem,
+    });
+  });
 
-      const updatedCanteen = await canteenService.updateCanteen(
-        canteenId as string,
-        req.user.userId,
-        req.user.role,
-        validatedData,
-      );
+  getMenuItems = asyncHandler(async (req: Request, res: Response) => {
+    const { canteenId } = req.params;
+    const menuItems = await canteenService.getMenuItems(canteenId as string);
 
-      return res.status(200).json({
-        success: true,
-        message: 'Canteen updated successfully',
-        data: updatedCanteen,
-      });
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation error',
-          errors: error.issues.map((err) => ({
-            field: err.path.join('.'),
-            message: err.message,
-          })),
-        });
-      }
+    return res.status(200).json({
+      success: true,
+      message: 'Menu items retrieved successfully',
+      data: menuItems,
+    });
+  });
 
-      if (error instanceof Error) {
-        if (error.message.includes('Unauthorized')) {
-          return res.status(403).json({
-            success: false,
-            message: error.message,
-          });
-        }
-        return res.status(400).json({
-          success: false,
-          message: error.message,
-        });
-      }
+  updateMenuItem = asyncHandler(async (req: Request, res: Response) => {
+    const { canteenId, menuItemId } = req.params;
+    const validatedData = updateMenuItemSchema.parse(req.body);
 
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-      });
+    if (!req.user) {
+      throw new UnauthorizedError();
     }
-  }
 
-  async createMenuItem(req: Request, res: Response) {
-    try {
-      const { canteenId } = req.params;
-      const validatedData = createMenuItemSchema.parse(req.body);
+    const updatedMenuItem = await canteenService.updateMenuItem(
+      menuItemId as string,
+      canteenId as string,
+      req.user.userId,
+      req.user.role,
+      validatedData,
+    );
 
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Unauthorized',
-        });
-      }
+    return res.status(200).json({
+      success: true,
+      message: 'Menu item updated successfully',
+      data: updatedMenuItem,
+    });
+  });
 
-      const menuItem = await canteenService.createMenuItem(
-        canteenId as string,
-        req.user.userId,
-        req.user.role,
-        validatedData,
-      );
+  deleteMenuItem = asyncHandler(async (req: Request, res: Response) => {
+    const { canteenId, menuItemId } = req.params;
 
-      return res.status(201).json({
-        success: true,
-        message: 'Menu item created successfully',
-        data: menuItem,
-      });
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation error',
-          errors: error.issues.map((err) => ({
-            field: err.path.join('.'),
-            message: err.message,
-          })),
-        });
-      }
-
-      if (error instanceof Error) {
-        if (error.message.includes('Unauthorized')) {
-          return res.status(403).json({
-            success: false,
-            message: error.message,
-          });
-        }
-        return res.status(400).json({
-          success: false,
-          message: error.message,
-        });
-      }
-
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-      });
+    if (!req.user) {
+      throw new UnauthorizedError();
     }
-  }
 
-  async getMenuItems(req: Request, res: Response) {
-    try {
-      const { canteenId } = req.params;
-      const menuItems = await canteenService.getMenuItems(canteenId as string);
+    const result = await canteenService.deleteMenuItem(
+      menuItemId as string,
+      canteenId as string,
+      req.user.userId,
+      req.user.role,
+    );
 
-      return res.status(200).json({
-        success: true,
-        message: 'Menu items retrieved successfully',
-        data: menuItems,
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message.includes('not found')) {
-          return res.status(404).json({
-            success: false,
-            message: error.message,
-          });
-        }
-        return res.status(400).json({
-          success: false,
-          message: error.message,
-        });
-      }
-
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-      });
-    }
-  }
-
-  async updateMenuItem(req: Request, res: Response) {
-    try {
-      const { canteenId, menuItemId } = req.params;
-      const validatedData = updateMenuItemSchema.parse(req.body);
-
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Unauthorized',
-        });
-      }
-
-      const updatedMenuItem = await canteenService.updateMenuItem(
-        menuItemId as string,
-        canteenId as string,
-        req.user.userId,
-        req.user.role,
-        validatedData,
-      );
-
-      return res.status(200).json({
-        success: true,
-        message: 'Menu item updated successfully',
-        data: updatedMenuItem,
-      });
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation error',
-          errors: error.issues.map((err) => ({
-            field: err.path.join('.'),
-            message: err.message,
-          })),
-        });
-      }
-
-      if (error instanceof Error) {
-        return res.status(400).json({
-          success: false,
-          message: error.message,
-        });
-      }
-
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-      });
-    }
-  }
-
-  async deleteMenuItem(req: Request, res: Response) {
-    try {
-      const { canteenId, menuItemId } = req.params;
-
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Unauthorized',
-        });
-      }
-
-      const result = await canteenService.deleteMenuItem(
-        menuItemId as string,
-        canteenId as string,
-        req.user.userId,
-        req.user.role,
-      );
-
-      return res.status(200).json({
-        success: true,
-        message: result.message,
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        return res.status(400).json({
-          success: false,
-          message: error.message,
-        });
-      }
-
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-      });
-    }
-  }
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  });
 }
 
 export default new CanteenController();
