@@ -99,11 +99,26 @@ curl -X POST http://localhost:3000/api/auth/login \
   -d '{"email":"root@admin.com","password":"your-password"}'
 ```
 
-### Optional: Seed Sample Data
+### Optional: Seed Sample Data (Docker)
 
-**Note**: Full sample data seeding is not available in Docker due to compilation limitations. Use local development setup if you need the full seed data.
+By default, Docker only seeds the admin user and allowed email domains.  
+To add sample users, canteens, orders, and reviews:
 
-For local development only, see [Method 2: Local Development Setup](#local-development-commands) below.
+```bash
+# Run full seed inside the Docker container
+docker exec canteen-app node dist/scripts/seed-full.js
+```
+
+This creates additional test data with these credentials (password: `Password123`):
+- User: `john.doe@gmail.com`
+- Canteen Owner: `tony.restaurant@gmail.com`
+
+**Note**: Full seed only works on a fresh database. To re-seed, reset the database first:
+```bash
+docker-compose down -v
+docker-compose up -d
+# Then run the full seed command above
+```
 
 ### Docker Management Commands
 
@@ -196,15 +211,22 @@ Application runs at: `http://localhost:3000`
 
 ### Optional: Seed Sample Data
 
+For a database with sample transactions, orders, and users:
+
 ```bash
 npx ts-node scripts/seed-full.ts
 ```
 
 This creates:
-- 8 users (students and canteen owners)
-- 3 canteens with menu items
-- 5 sample orders
-- 3 reviews
+- 1 Admin + 4 regular users + 3 canteen owners
+- 3 canteens with 8 menu items total
+- 5 sample orders with payments
+- 2 reviews
+
+**Test credentials** (password: `Password123`):
+- Admin: `root@admin.com`
+- User: `john.doe@gmail.com`
+- Canteen Owner: `tony.restaurant@gmail.com`
 
 ### Local Development Commands
 
