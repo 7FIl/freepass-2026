@@ -1,30 +1,6 @@
 import { z } from 'zod';
 
-const ALLOWED_EMAIL_DOMAINS = [
-  'gmail.com',
-  'icloud.com',
-  'me.com',
-  'mac.com',
-  '163.com',
-  'qq.com',
-  'outlook.com',
-  'hotmail.com',
-  'live.com',
-  'msn.com',
-  'yandex.ru',
-  'yahoo.com',
-  '126.com',
-  'proton.me',
-  'protonmail.com',
-  'mail.ru',
-  'student.ub.ac.id',
-  'ub.ac.id',
-];
-
-const isAllowedEmailDomain = (email: string): boolean => {
-  const domain = email.split('@')[1]?.toLowerCase();
-  return ALLOWED_EMAIL_DOMAINS.includes(domain);
-};
+// Note: Email domain validation is now done dynamically via database in the service layer
 
 export const registerSchema = z.object({
   username: z
@@ -32,12 +8,7 @@ export const registerSchema = z.object({
     .min(3, 'Username must be at least 3 characters')
     .max(30, 'Username must not exceed 30 characters')
     .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
-  email: z
-    .string()
-    .email('Invalid email format')
-    .refine(isAllowedEmailDomain, {
-      message: 'Email domain is not allowed. Please use an allowed email provider.',
-    }),
+  email: z.string().email('Invalid email format'),
   password: z
     .string()
     .min(8, 'Password must be at least 8 characters')
@@ -62,13 +33,7 @@ export const updateProfileSchema = z.object({
     .max(30, 'Username must not exceed 30 characters')
     .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores')
     .optional(),
-  email: z
-    .string()
-    .email('Invalid email format')
-    .refine(isAllowedEmailDomain, {
-      message: 'Email domain is not allowed. Please use an allowed email provider.',
-    })
-    .optional(),
+  email: z.string().email('Invalid email format').optional(),
 });
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

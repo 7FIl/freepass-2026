@@ -91,7 +91,7 @@ describe('Auth API - Edge Cases', () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toContain('Validation error');
+      expect(res.body.message).toContain('Email domain is not allowed');
     });
 
     it('should reject short username (less than 3)', async () => {
@@ -375,7 +375,7 @@ describe('Auth API - Edge Cases', () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toContain('Validation error');
+      expect(res.body.message).toContain('Email domain is not allowed');
     });
 
     it('should reject update with short username', async () => {

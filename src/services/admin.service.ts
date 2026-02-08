@@ -2,9 +2,16 @@ import bcrypt from 'bcrypt';
 import prisma from '../utils/prisma';
 import { CreateUserInput, UpdateUserInput } from '../validations/admin.validation';
 import { BadRequestError, NotFoundError } from '../types/errors';
+import { invalidateAllowedDomainsCache, isEmailDomainAllowed } from '../utils/allowedDomains';
 
 export class AdminService {
   async createUser(data: CreateUserInput) {
+    // Validate email domain against database
+    const domainAllowed = await isEmailDomainAllowed(data.email);
+    if (!domainAllowed) {
+      throw new BadRequestError('Email domain not allowed');
+    }
+
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ email: data.email }, { username: data.username }],
@@ -100,6 +107,12 @@ export class AdminService {
     }
 
     if (data.email && data.email !== user.email) {
+      // Validate email domain against database
+      const domainAllowed = await isEmailDomainAllowed(data.email);
+      if (!domainAllowed) {
+        throw new BadRequestError('Email domain not allowed');
+      }
+
       const existingEmail = await prisma.user.findUnique({
         where: { email: data.email },
       });
@@ -195,6 +208,81 @@ export class AdminService {
         totalPages,
       },
     };
+  }
+
+  // ==================== Allowed Email Domains ====================
+
+  async getAllowedDomains(page: number = 1, limit: number = 50) {
+    const skip = (page - 1) * limit;
+
+    const domains = await prisma.allowedEmailDomain.findMany({
+      select: {
+        id: true,
+        domain: true,
+        createdAt: true,
+      },
+      skip,
+      take: limit,
+      orderBy: { domain: 'asc' },
+    });
+
+    const total = await prisma.allowedEmailDomain.count();
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: domains,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    };
+  }
+
+  async addAllowedDomain(domain: string) {
+    const normalizedDomain = domain.toLowerCase().trim();
+
+    const existing = await prisma.allowedEmailDomain.findUnique({
+      where: { domain: normalizedDomain },
+    });
+
+    if (existing) {
+      throw new BadRequestError('Domain already exists');
+    }
+
+    const created = await prisma.allowedEmailDomain.create({
+      data: { domain: normalizedDomain },
+      select: {
+        id: true,
+        domain: true,
+        createdAt: true,
+      },
+    });
+
+    // Invalidate cache
+    invalidateAllowedDomainsCache();
+
+    return created;
+  }
+
+  async deleteAllowedDomain(domainId: string) {
+    const domain = await prisma.allowedEmailDomain.findUnique({
+      where: { id: domainId },
+    });
+
+    if (!domain) {
+      throw new NotFoundError('Domain not found');
+    }
+
+    await prisma.allowedEmailDomain.delete({
+      where: { id: domainId },
+    });
+
+    // Invalidate cache
+    invalidateAllowedDomainsCache();
+
+    return { message: 'Domain deleted successfully' };
   }
 }
 

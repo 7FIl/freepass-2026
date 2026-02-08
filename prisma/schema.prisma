@@ -178,3 +178,13 @@ model RefreshToken {
   @@index([expiresAt])
   @@map("refresh_tokens")
 }
+
+model AllowedEmailDomain {
+  id        String   @id @default(uuid())
+  domain    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([domain])
+  @@map("allowed_email_domains")
+}

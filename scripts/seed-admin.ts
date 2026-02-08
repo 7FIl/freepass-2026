@@ -3,7 +3,55 @@ import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
 
-async function main() {
+// Default allowed email domains
+const DEFAULT_ALLOWED_DOMAINS = [
+  'gmail.com',
+  'icloud.com',
+  'me.com',
+  'mac.com',
+  '163.com',
+  'qq.com',
+  'outlook.com',
+  'hotmail.com',
+  'live.com',
+  'msn.com',
+  'yandex.ru',
+  'yahoo.com',
+  '126.com',
+  'proton.me',
+  'protonmail.com',
+  'mail.ru',
+  'student.ub.ac.id',
+  'ub.ac.id',
+  'admin.com', // For admin user
+];
+
+async function seedAllowedEmailDomains() {
+  console.log('Seeding allowed email domains...');
+
+  const existingDomains = await prisma.allowedEmailDomain.findMany({
+    select: { domain: true },
+  });
+  const existingDomainSet = new Set(existingDomains.map(d => d.domain));
+
+  const domainsToCreate = DEFAULT_ALLOWED_DOMAINS.filter(
+    domain => !existingDomainSet.has(domain)
+  );
+
+  if (domainsToCreate.length === 0) {
+    console.log('All allowed email domains already exist');
+    return;
+  }
+
+  await prisma.allowedEmailDomain.createMany({
+    data: domainsToCreate.map(domain => ({ domain })),
+    skipDuplicates: true,
+  });
+
+  console.log(`Created ${domainsToCreate.length} allowed email domains`);
+}
+
+async function seedAdminUser() {
   console.log('Seeding admin user...');
 
   const adminPassword = process.env.POSTGRES_PASSWORD || '12345678';
@@ -37,9 +85,17 @@ async function main() {
   });
 }
 
+async function main() {
+  // Seed allowed email domains first
+  await seedAllowedEmailDomains();
+  
+  // Seed admin user
+  await seedAdminUser();
+}
+
 main()
   .catch((e) => {
-    console.error('Error seeding admin user:', e);
+    console.error('Error seeding:', e);
     process.exit(1);
   })
   .finally(async () => {

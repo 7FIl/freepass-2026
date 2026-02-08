@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import prisma from '../utils/prisma';
 import { RegisterInput, LoginInput, UpdateProfileInput, ChangePasswordInput, RefreshTokenInput } from '../validations/auth.validation';
 import { NotFoundError, BadRequestError, UnauthorizedError } from '../types/errors';
+import { isEmailDomainAllowed } from '../utils/allowedDomains';
 
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET environment variable is not set');
@@ -57,6 +58,12 @@ export class AuthService {
 
   async register(data: RegisterInput) {
     const { username, email, password } = data;
+
+    // Validate email domain against database
+    const domainAllowed = await isEmailDomainAllowed(email);
+    if (!domainAllowed) {
+      throw new BadRequestError('Email domain is not allowed. Please use an allowed email provider.');
+    }
 
     const existingUser = await prisma.user.findFirst({
       where: {
@@ -135,6 +142,14 @@ export class AuthService {
 
     if (!username && !email) {
       throw new BadRequestError('At least one field must be provided for update');
+    }
+
+    // Validate email domain if email is being updated
+    if (email) {
+      const domainAllowed = await isEmailDomainAllowed(email);
+      if (!domainAllowed) {
+        throw new BadRequestError('Email domain is not allowed. Please use an allowed email provider.');
+      }
     }
 
     if (username || email) {

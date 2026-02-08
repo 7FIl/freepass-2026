@@ -177,7 +177,7 @@ describe('Admin API - Edge Cases', () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body.message).toContain('Validation error');
+      expect(res.body.message).toContain('Email domain not allowed');
     });
 
     it('should reject weak password', async () => {
