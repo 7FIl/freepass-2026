@@ -101,17 +101,9 @@ curl -X POST http://localhost:3000/api/auth/login \
 
 ### Optional: Seed Sample Data
 
-To populate database with sample users, canteens, orders, and reviews:
+**Note**: Full sample data seeding is not available in Docker due to compilation limitations. Use local development setup if you need the full seed data.
 
-```bash
-docker exec -it canteen-app npx ts-node scripts/seed-full.ts
-```
-
-This creates:
-- 8 users (students and canteen owners)
-- 3 canteens with menu items
-- 5 sample orders
-- 3 reviews
+For local development only, see [Method 2: Local Development Setup](#local-development-commands) below.
 
 ### Docker Management Commands
 
@@ -207,6 +199,12 @@ Application runs at: `http://localhost:3000`
 ```bash
 npx ts-node scripts/seed-full.ts
 ```
+
+This creates:
+- 8 users (students and canteen owners)
+- 3 canteens with menu items
+- 5 sample orders
+- 3 reviews
 
 ### Local Development Commands
 

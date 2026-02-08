@@ -17,6 +17,8 @@ const allowedEmailDomains = [
   'msn.com',
   'protonmail.com',
   'mail.ru',
+  'student.ub.ac.id',
+  'ub.ac.id',
 ];
 
 export const createUserSchema = z.object({
