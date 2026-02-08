@@ -17,7 +17,7 @@ export class AdminController {
 
     const user = await adminService.createUser(validatedData);
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'User created successfully',
       data: user,
     });
@@ -33,7 +33,7 @@ export class AdminController {
 
     const result = await adminService.getAllUsers(page, limit);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Users retrieved successfully',
       data: result,
     });
@@ -47,7 +47,7 @@ export class AdminController {
     const { userId } = req.params;
     const user = await adminService.getUserById(userId as string);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'User retrieved successfully',
       data: user,
     });
@@ -63,7 +63,7 @@ export class AdminController {
 
     const user = await adminService.updateUser(userId as string, validatedData);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'User updated successfully',
       data: user,
     });
@@ -77,7 +77,9 @@ export class AdminController {
     const { userId } = req.params;
     const result = await adminService.deleteUser(userId as string);
 
-    res.status(200).json(result);
+    return res.status(200).json({
+      message: result.message,
+    });
   });
 
   getCanteenOwners = asyncHandler(async (req: Request, res: Response) => {
@@ -90,7 +92,7 @@ export class AdminController {
 
     const result = await adminService.getCanteenOwners(page, limit);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Canteen owners retrieved successfully',
       data: result,
     });

@@ -10,5 +10,6 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
+  maxWorkers: 1, // Run tests serially to avoid database conflicts
 };
 

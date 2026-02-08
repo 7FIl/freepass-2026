@@ -9,95 +9,114 @@ import { NotFoundError, ForbiddenError, BadRequestError } from '../types/errors'
 
 export class OrderService {
   async createOrder(userId: string, canteenId: string, data: CreateOrderInput) {
-    const canteen = await prisma.canteen.findUnique({
-      where: { id: canteenId },
-    });
-
-    if (!canteen) {
-      throw new BadRequestError('Canteen not found');
-    }
-
-    if (!canteen.isOpen) {
-      throw new BadRequestError('Canteen is currently closed');
-    }
-
-    let totalPrice = 0;
-    const menuItems: { id: string; price: number; name: string; stock: number }[] = [];
-
-    for (const item of data.items) {
-      const menuItem = await prisma.menuItem.findUnique({
-        where: { id: item.menuItemId },
+    // Use interactive transaction with proper isolation level to prevent race conditions
+    const order = await prisma.$transaction(async (tx) => {
+      // Check canteen availability first
+      const canteen = await tx.canteen.findUnique({
+        where: { id: canteenId },
       });
 
-      if (!menuItem) {
-        throw new BadRequestError(`Menu item ${item.menuItemId} not found`);
+      if (!canteen) {
+        throw new BadRequestError('Canteen not found');
       }
 
-      if (menuItem.canteenId !== canteenId) {
-        throw new BadRequestError(`Menu item ${item.menuItemId} does not belong to this canteen`);
+      if (!canteen.isOpen) {
+        throw new BadRequestError('Canteen is currently closed');
       }
 
-      if (menuItem.stock < item.quantity) {
-        throw new BadRequestError(`Insufficient stock for ${menuItem.name}. Available: ${menuItem.stock}`);
+      let totalPrice = 0;
+      const menuItems: { id: string; price: number; name: string; stock: number }[] = [];
+
+      // Fetch and validate menu items within the transaction
+      // The Serializable isolation level ensures proper locking
+      for (const item of data.items) {
+        const menuItem = await tx.menuItem.findUnique({
+          where: { id: item.menuItemId },
+        });
+
+        if (!menuItem) {
+          throw new BadRequestError(`Menu item ${item.menuItemId} not found`);
+        }
+
+        if (menuItem.canteenId !== canteenId) {
+          throw new BadRequestError(`Menu item ${item.menuItemId} does not belong to this canteen`);
+        }
+
+        if (menuItem.stock < item.quantity) {
+          throw new BadRequestError(`Insufficient stock for ${menuItem.name}. Available: ${menuItem.stock}`);
+        }
+
+        totalPrice += menuItem.price * item.quantity;
+        menuItems.push({
+          id: menuItem.id,
+          price: menuItem.price,
+          name: menuItem.name,
+          stock: menuItem.stock,
+        });
       }
 
-      totalPrice += menuItem.price * item.quantity;
-      menuItems.push({
-        id: menuItem.id,
-        price: menuItem.price,
-        name: menuItem.name,
-        stock: menuItem.stock,
-      });
-    }
+      // Decrement stock atomically within transaction
+      for (const item of data.items) {
+        const updatedItem = await tx.menuItem.update({
+          where: { id: item.menuItemId },
+          data: {
+            stock: {
+              decrement: item.quantity,
+            },
+          },
+        });
 
-    const order = await prisma.order.create({
-      data: {
-        userId,
-        canteenId,
-        totalPrice,
-        items: {
-          create: data.items.map((item) => {
-            const menuItem = menuItems.find((m) => m.id === item.menuItemId)!;
-            return {
-              menuItemId: item.menuItemId,
-              quantity: item.quantity,
-              price: menuItem.price * item.quantity,
-            };
-          }),
-        },
-      },
-      include: {
-        items: {
-          include: {
-            menuItem: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-          },
-        },
-        canteen: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
+        // Double-check stock didn't go negative (additional safety check)
+        if (updatedItem.stock < 0) {
+          throw new BadRequestError(`Race condition detected: Insufficient stock for item ${item.menuItemId}`);
+        }
+      }
 
-    for (const item of data.items) {
-      await prisma.menuItem.update({
-        where: { id: item.menuItemId },
+      // Create order with all items
+      const newOrder = await tx.order.create({
         data: {
-          stock: {
-            decrement: item.quantity,
+          userId,
+          canteenId,
+          totalPrice,
+          items: {
+            create: data.items.map((item) => {
+              const menuItem = menuItems.find((m) => m.id === item.menuItemId)!;
+              return {
+                menuItemId: item.menuItemId,
+                quantity: item.quantity,
+                price: menuItem.price * item.quantity,
+              };
+            }),
+          },
+        },
+        include: {
+          items: {
+            include: {
+              menuItem: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              username: true,
+              email: true,
+            },
+          },
+          canteen: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
         },
       });
-    }
+
+      return newOrder;
+    }, {
+      isolationLevel: 'Serializable', // Highest isolation level to prevent race conditions
+      maxWait: 5000, // Wait up to 5 seconds for transaction lock
+      timeout: 10000, // Transaction timeout after 10 seconds
+    });
 
     return order;
   }
@@ -253,63 +272,75 @@ export class OrderService {
   }
 
   async makePayment(orderId: string, userId: string, data: MakePaymentInput) {
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
+    // Use transaction with locking to prevent double payment
+    const result = await prisma.$transaction(async (tx) => {
+      // Lock the order row for update
+      const order = await tx.order.findUnique({
+        where: { id: orderId },
+      });
+
+      if (!order) {
+        throw new BadRequestError('Order not found');
+      }
+
+      if (order.userId !== userId) {
+        throw new ForbiddenError('Unauthorized: You can only pay for your own orders');
+      }
+
+      if (order.paymentStatus === 'PAID') {
+        throw new BadRequestError('Order has already been paid');
+      }
+
+      if (Math.abs(data.amount - order.totalPrice) > 0.01) {
+        throw new BadRequestError(`Amount mismatch. Expected: ${order.totalPrice}, Received: ${data.amount}`);
+      }
+
+      // Create payment record
+      const payment = await tx.payment.create({
+        data: {
+          orderId,
+          amount: data.amount,
+          status: 'PAID',
+        },
+      });
+
+      // Update order payment status
+      const updatedOrder = await tx.order.update({
+        where: { id: orderId },
+        data: {
+          paymentStatus: 'PAID',
+        },
+        include: {
+          items: {
+            include: {
+              menuItem: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              username: true,
+              email: true,
+            },
+          },
+          canteen: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          payment: true,
+        },
+      });
+
+      return { payment, order: updatedOrder };
+    }, {
+      isolationLevel: 'Serializable',
+      maxWait: 5000,
+      timeout: 10000,
     });
 
-    if (!order) {
-      throw new BadRequestError('Order not found');
-    }
-
-    if (order.userId !== userId) {
-      throw new ForbiddenError('Unauthorized: You can only pay for your own orders');
-    }
-
-    if (order.paymentStatus === 'PAID') {
-      throw new BadRequestError('Order has already been paid');
-    }
-
-    if (Math.abs(data.amount - order.totalPrice) > 0.01) {
-      throw new BadRequestError(`Amount mismatch. Expected: ${order.totalPrice}, Received: ${data.amount}`);
-    }
-
-    const payment = await prisma.payment.create({
-      data: {
-        orderId,
-        amount: data.amount,
-        status: 'PAID',
-      },
-    });
-
-    const updatedOrder = await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        paymentStatus: 'PAID',
-      },
-      include: {
-        items: {
-          include: {
-            menuItem: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
-          },
-        },
-        canteen: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        payment: true,
-      },
-    });
-
-    return { payment, order: updatedOrder };
+    return result;
   }
 
   async createReview(orderId: string, userId: string, data: CreateReviewInput) {

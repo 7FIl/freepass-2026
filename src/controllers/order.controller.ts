@@ -17,7 +17,7 @@ export class OrderController {
     const validatedData = createOrderSchema.parse(req.body);
     const order = await orderService.createOrder(userId, canteenId as string, validatedData);
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Order created successfully',
       data: order,
     });
@@ -28,7 +28,7 @@ export class OrderController {
     const { page, limit, status, paymentStatus } = paginationSchema.parse(req.query);
     const result = await orderService.getUserOrders(userId, page, limit, status, paymentStatus);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Orders retrieved successfully',
       data: result.orders,
       pagination: result.pagination,
@@ -41,7 +41,7 @@ export class OrderController {
 
     const orders = await orderService.getCanteenOrders(canteenId as string, userId, role);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Orders retrieved successfully',
       data: orders,
     });
@@ -54,7 +54,7 @@ export class OrderController {
     const validatedData = updateOrderStatusSchema.parse(req.body);
     const order = await orderService.updateOrderStatus(orderId as string, userId, role, validatedData);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Order status updated successfully',
       data: order,
     });
@@ -67,7 +67,7 @@ export class OrderController {
     const validatedData = makePaymentSchema.parse(req.body);
     const result = await orderService.makePayment(orderId as string, userId, validatedData);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Payment processed successfully',
       data: result,
     });
@@ -80,7 +80,7 @@ export class OrderController {
     const validatedData = createReviewSchema.parse(req.body);
     const review = await orderService.createReview(orderId as string, userId, validatedData);
 
-    res.status(201).json({
+    return res.status(201).json({
       message: 'Review created successfully',
       data: review,
     });
@@ -92,7 +92,7 @@ export class OrderController {
 
     const result = await orderService.deleteReview(reviewId as string, userId, role);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: result.message,
     });
   });
@@ -102,7 +102,7 @@ export class OrderController {
 
     const reviews = await orderService.getCanteenReviews(canteenId as string);
 
-    res.status(200).json({
+    return res.status(200).json({
       message: 'Reviews retrieved successfully',
       data: reviews,
     });
