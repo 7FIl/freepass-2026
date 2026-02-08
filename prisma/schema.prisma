@@ -76,7 +76,7 @@ model MenuItem {
   canteen     Canteen  @relation(fields: [canteenId], references: [id], onDelete: Cascade)
   name        String
   description String
-  price       Float
+  price       Decimal  @db.Decimal(10, 2)
   stock       Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -95,7 +95,7 @@ model Order {
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   canteenId     String
   canteen       Canteen       @relation(fields: [canteenId], references: [id], onDelete: Cascade)
-  totalPrice    Float
+  totalPrice    Decimal       @db.Decimal(10, 2)
   status        OrderStatus   @default(WAITING)
   paymentStatus PaymentStatus @default(UNPAID)
   createdAt     DateTime      @default(now())
@@ -123,7 +123,7 @@ model OrderItem {
   menuItemId String
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   quantity   Int
-  price      Float
+  price      Decimal  @db.Decimal(10, 2)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -137,7 +137,7 @@ model Payment {
   id        String        @id @default(uuid())
   orderId   String
   order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  amount    Float
+  amount    Decimal       @db.Decimal(10, 2)
   status    PaymentStatus @default(UNPAID)
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt

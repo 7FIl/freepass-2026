@@ -47,10 +47,11 @@ export class OrderService {
           throw new BadRequestError(`Insufficient stock for ${menuItem.name}. Available: ${menuItem.stock}`);
         }
 
-        totalPrice += menuItem.price * item.quantity;
+        const priceAsNumber = Number(menuItem.price);
+        totalPrice += priceAsNumber * item.quantity;
         menuItems.push({
           id: menuItem.id,
-          price: menuItem.price,
+          price: priceAsNumber,
           name: menuItem.name,
           stock: menuItem.stock,
         });
@@ -283,8 +284,9 @@ export class OrderService {
       throw new BadRequestError('Order has already been paid');
     }
 
-    if (Math.abs(data.amount - order.totalPrice) > 0.01) {
-      throw new BadRequestError(`Amount mismatch. Expected: ${order.totalPrice}, Received: ${data.amount}`);
+    const orderTotalPrice = Number(order.totalPrice);
+    if (Math.abs(data.amount - orderTotalPrice) > 0.01) {
+      throw new BadRequestError(`Amount mismatch. Expected: ${orderTotalPrice}, Received: ${data.amount}`);
     }
 
     const result = await prisma.$transaction(async (tx) => {

@@ -111,7 +111,7 @@ describe('Order API - Edge Cases', () => {
         });
 
       expect(res.status).toBe(201);
-      expect(res.body.data.totalPrice).toBe(10.99 * 2);
+      expect(res.body.data.totalPrice).toBe('21.98');
       expect(res.body.data.status).toBe('WAITING');
       expect(res.body.data.paymentStatus).toBe('UNPAID');
       orderId = res.body.data.id;

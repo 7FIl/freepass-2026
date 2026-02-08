@@ -299,7 +299,7 @@ describe('Canteen API - Edge Cases', () => {
 
       expect(res.status).toBe(201);
       expect(res.body.data.name).toBe('Burger');
-      expect(res.body.data.price).toBe(5.99);
+      expect(res.body.data.price).toBe('5.99');
       expect(res.body.data.stock).toBe(50);
     });
 
