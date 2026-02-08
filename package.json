@@ -44,10 +44,8 @@
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
-    "hono": "^4.11.7",
     "ioredis": "^5.9.2",
     "jsonwebtoken": "^9.0.3",
-    "lodash": "^4.17.23",
     "pg": "^8.18.0",
     "pino": "^10.3.0",
     "pino-http": "^11.0.0",
@@ -74,9 +72,5 @@
     "ts-jest": "^29.4.6",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
-  },
-  "overrides": {
-    "hono": "^4.11.7",
-    "lodash": "^4.17.23"
   }
 }
