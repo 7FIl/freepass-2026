@@ -1,4 +1,5 @@
 import prisma from '../utils/prisma';
+import cache, { CACHE_KEYS, CACHE_TTL } from '../utils/cache';
 import {
   CreateCanteenInput,
   UpdateCanteenInput,
@@ -25,46 +26,60 @@ export class CanteenService {
       },
     });
 
+    // Invalidate canteens list cache
+    cache.del(CACHE_KEYS.CANTEENS_LIST);
+
     return canteen;
   }
 
   async getCanteens() {
-    const canteens = await prisma.canteen.findMany({
-      include: {
-        owner: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
+    return cache.getOrSet(
+      CACHE_KEYS.CANTEENS_LIST,
+      async () => {
+        const canteens = await prisma.canteen.findMany({
+          include: {
+            owner: {
+              select: {
+                id: true,
+                username: true,
+                email: true,
+              },
+            },
+            menuItems: true,
           },
-        },
-        menuItems: true,
+        });
+        return canteens;
       },
-    });
-
-    return canteens;
+      CACHE_TTL.CANTEENS,
+    );
   }
 
   async getCanteenById(canteenId: string) {
-    const canteen = await prisma.canteen.findUnique({
-      where: { id: canteenId },
-      include: {
-        owner: {
-          select: {
-            id: true,
-            username: true,
-            email: true,
+    return cache.getOrSet(
+      CACHE_KEYS.CANTEEN_BY_ID(canteenId),
+      async () => {
+        const canteen = await prisma.canteen.findUnique({
+          where: { id: canteenId },
+          include: {
+            owner: {
+              select: {
+                id: true,
+                username: true,
+                email: true,
+              },
+            },
+            menuItems: true,
           },
-        },
-        menuItems: true,
+        });
+
+        if (!canteen) {
+          throw new NotFoundError('Canteen not found');
+        }
+
+        return canteen;
       },
-    });
-
-    if (!canteen) {
-      throw new NotFoundError('Canteen not found');
-    }
-
-    return canteen;
+      CACHE_TTL.CANTEENS,
+    );
   }
 
   async updateCanteen(canteenId: string, userId: string, userRole: string, data: UpdateCanteenInput) {
@@ -95,6 +110,9 @@ export class CanteenService {
       },
     });
 
+    // Invalidate caches
+    cache.del([CACHE_KEYS.CANTEENS_LIST, CACHE_KEYS.CANTEEN_BY_ID(canteenId)]);
+
     return updatedCanteen;
   }
 
@@ -119,10 +137,18 @@ export class CanteenService {
       },
     });
 
+    // Invalidate menu and canteen caches
+    cache.del([
+      CACHE_KEYS.MENU_ITEMS(canteenId),
+      CACHE_KEYS.CANTEEN_BY_ID(canteenId),
+      CACHE_KEYS.CANTEENS_LIST,
+    ]);
+
     return menuItem;
   }
 
   async getMenuItems(canteenId: string) {
+    // First check if canteen exists (not cached to ensure fresh check)
     const canteen = await prisma.canteen.findUnique({
       where: { id: canteenId },
     });
@@ -131,11 +157,16 @@ export class CanteenService {
       throw new NotFoundError('Canteen not found');
     }
 
-    const menuItems = await prisma.menuItem.findMany({
-      where: { canteenId },
-    });
-
-    return menuItems;
+    return cache.getOrSet(
+      CACHE_KEYS.MENU_ITEMS(canteenId),
+      async () => {
+        const menuItems = await prisma.menuItem.findMany({
+          where: { canteenId },
+        });
+        return menuItems;
+      },
+      CACHE_TTL.MENU_ITEMS,
+    );
   }
 
   async updateMenuItem(
@@ -171,6 +202,13 @@ export class CanteenService {
       data,
     });
 
+    // Invalidate menu and canteen caches
+    cache.del([
+      CACHE_KEYS.MENU_ITEMS(canteenId),
+      CACHE_KEYS.CANTEEN_BY_ID(canteenId),
+      CACHE_KEYS.CANTEENS_LIST,
+    ]);
+
     return updatedMenuItem;
   }
 
@@ -199,6 +237,13 @@ export class CanteenService {
     await prisma.menuItem.delete({
       where: { id: menuItemId },
     });
+
+    // Invalidate menu and canteen caches
+    cache.del([
+      CACHE_KEYS.MENU_ITEMS(canteenId),
+      CACHE_KEYS.CANTEEN_BY_ID(canteenId),
+      CACHE_KEYS.CANTEENS_LIST,
+    ]);
 
     return { message: 'Menu item deleted successfully' };
   }

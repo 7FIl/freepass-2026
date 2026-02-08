@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import authService from '../services/auth.service';
-import { registerSchema, loginSchema, updateProfileSchema, changePasswordSchema } from '../validations/auth.validation';
+import { registerSchema, loginSchema, updateProfileSchema, changePasswordSchema, refreshTokenSchema } from '../validations/auth.validation';
 import { asyncHandler } from '../utils/asyncHandler';
 import { UnauthorizedError } from '../types/errors';
 
@@ -24,6 +24,40 @@ export class AuthController {
       success: true,
       message: 'Login successful',
       data: result,
+    });
+  });
+
+  refreshToken = asyncHandler(async (req: Request, res: Response) => {
+    const validatedData = refreshTokenSchema.parse(req.body);
+    const result = await authService.refreshToken(validatedData);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Token refreshed successfully',
+      data: result,
+    });
+  });
+
+  logout = asyncHandler(async (req: Request, res: Response) => {
+    const validatedData = refreshTokenSchema.parse(req.body);
+    const result = await authService.logout(validatedData.refreshToken);
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  });
+
+  logoutAll = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new UnauthorizedError();
+    }
+
+    const result = await authService.logoutAll(req.user.userId);
+
+    return res.status(200).json({
+      success: true,
+      message: result.message,
     });
   });
 

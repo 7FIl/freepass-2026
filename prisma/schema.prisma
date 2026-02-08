@@ -40,9 +40,10 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  canteens  Canteen[]
-  orders    Order[]
-  reviews   Review[]
+  canteens      Canteen[]
+  orders        Order[]
+  reviews       Review[]
+  refreshTokens RefreshToken[]
 
   @@index([role])
   @@index([createdAt])
@@ -161,4 +162,19 @@ model Review {
   @@index([userId, createdAt])
   @@index([createdAt])
   @@map("reviews")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revoked   Boolean  @default(false)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
 }
